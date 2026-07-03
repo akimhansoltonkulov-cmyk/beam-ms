@@ -26,12 +26,15 @@ export default {
         ],
       },
       fontSize: {
-        // Typography scale (Design.pdf §2)
-        display: ['34px', { lineHeight: '1.05', letterSpacing: '-0.02em', fontWeight: '700' }],
-        section: ['20px', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '600' }],
-        'body-l': ['17px', { lineHeight: '1.45', fontWeight: '500' }],
-        'body-s': ['13px', { lineHeight: '1.4', fontWeight: '400' }],
-        btn: ['15px', { lineHeight: '1', letterSpacing: '0.01em', fontWeight: '700' }],
+        // Typography scale (Mobile UI Kit spec)
+        display: ['24px', { lineHeight: '32px', letterSpacing: '-0.01em', fontWeight: '700' }], // H1 / Headline
+        section: ['20px', { lineHeight: '26px', letterSpacing: '-0.005em', fontWeight: '700' }], // H2 / Title
+        subtitle: ['18px', { lineHeight: '24px', letterSpacing: '0em', fontWeight: '600' }], // H3 / Subtitle
+        t1: ['16px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '500' }], // Title 1 / UI
+        btn: ['16px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '600' }], // Button Text
+        'body-l': ['16px', { lineHeight: '24px', letterSpacing: '0em', fontWeight: '400' }], // Body / Main
+        'body-s': ['14px', { lineHeight: '18px', letterSpacing: '0.01em', fontWeight: '400' }], // Caption / Small
+        overline: ['12px', { lineHeight: '16px', letterSpacing: '0.02em', fontWeight: '700' }], // Overline
       },
       borderRadius: {
         // Extreme radii (Design.pdf §3)

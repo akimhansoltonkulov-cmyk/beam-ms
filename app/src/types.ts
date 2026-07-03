@@ -9,6 +9,7 @@ export interface User {
   avatar: string // solid color or url
   color: string
   bio?: string
+  language?: string
 }
 
 export interface Attachment {
@@ -20,6 +21,7 @@ export interface Attachment {
   duration?: number // voice seconds
   waveform?: number[] // voice amplitudes 0..1
   progress?: number // 0..1 upload/stream progress
+  uploading?: boolean // true while the file is uploading to storage
 }
 
 export interface Message {
@@ -49,6 +51,7 @@ export interface Chat {
   pinned?: boolean
   typing?: boolean
   draft?: string
+  archived?: boolean
 }
 
 // Transparency Console — a live packet in the audit log (Functions.pdf §3)

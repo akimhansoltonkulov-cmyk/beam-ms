@@ -71,8 +71,8 @@ export default function App() {
               )}
             </AnimatePresence>
 
-            {/* Floating glass dock */}
-            <FloatingDock />
+            {/* Floating glass dock (hidden inside a chat) */}
+            {!activeChatId && <FloatingDock />}
           </>
         )}
       </div>

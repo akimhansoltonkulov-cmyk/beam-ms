@@ -7,29 +7,45 @@ export function Avatar({
   size = 44,
   ring = false,
   online,
+  url,
 }: {
   name: string
   color: string
   size?: number
   ring?: boolean
   online?: boolean
+  url?: string
 }) {
   const dark = isDark(color)
+  const isImg = url && (url.startsWith('http') || url.startsWith('data:image/') || url.startsWith('/'))
   return (
     <span className="relative inline-flex shrink-0" style={{ width: size, height: size }}>
-      <span
-        className="flex items-center justify-center rounded-full font-bold"
-        style={{
-          width: size,
-          height: size,
-          background: color,
-          color: dark ? '#E1FF00' : '#0a0a0a',
-          fontSize: size * 0.36,
-          boxShadow: ring ? '0 0 0 2px #E1FF00' : undefined,
-        }}
-      >
-        {initials(name)}
-      </span>
+      {isImg ? (
+        <img
+          src={url}
+          alt={name}
+          className="rounded-full object-cover"
+          style={{
+            width: size,
+            height: size,
+            boxShadow: ring ? '0 0 0 2px #E1FF00' : undefined,
+          }}
+        />
+      ) : (
+        <span
+          className="flex items-center justify-center rounded-full font-bold"
+          style={{
+            width: size,
+            height: size,
+            background: color,
+            color: dark ? '#E1FF00' : '#0a0a0a',
+            fontSize: size * 0.36,
+            boxShadow: ring ? '0 0 0 2px #E1FF00' : undefined,
+          }}
+        >
+          {initials(name)}
+        </span>
+      )}
       {online !== undefined && (
         <span
           className="absolute bottom-0 right-0 rounded-full border-2 border-white"

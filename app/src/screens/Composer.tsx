@@ -4,10 +4,13 @@ import { useStore } from '../store'
 import { IconClose, IconMic, IconPaperclip, IconPlus, IconReply, IconSend } from '../components/Icons'
 import { secs } from '../lib/format'
 import type { Attachment } from '../types'
+import { useTranslation } from '../lib/i18n'
+import { uploadMedia } from '../lib/supabase'
 
 let ac = 0
 
 export default function Composer({ chatId }: { chatId: string }) {
+  const { t, lang: currentLang } = useTranslation()
   const users = useStore((s) => s.users)
   const replyTo = useStore((s) => s.replyTo)
   const setReplyTo = useStore((s) => s.setReplyTo)
@@ -24,6 +27,11 @@ export default function Composer({ chatId }: { chatId: string }) {
   const taRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const recTimer = useRef<number>()
+  const mediaRec = useRef<MediaRecorder | null>(null)
+  const recChunks = useRef<Blob[]>([])
+  const recStream = useRef<MediaStream | null>(null)
+
+  const uploading = atts.some((a) => a.uploading)
 
   // reset composer when switching chats
   useEffect(() => {
@@ -41,8 +49,11 @@ export default function Composer({ chatId }: { chatId: string }) {
   }, [text])
 
   const send = () => {
+    if (uploading) return
     if (!text.trim() && atts.length === 0) return
-    sendMessage(chatId, text, atts.length ? atts : undefined)
+    // strip transient upload flag before sending (undefined is omitted from JSON)
+    const clean = atts.map((a) => ({ ...a, uploading: undefined }))
+    sendMessage(chatId, text, clean.length ? clean : undefined)
     setText('')
     setAtts([])
     setDraft(chatId, '')
@@ -50,81 +61,141 @@ export default function Composer({ chatId }: { chatId: string }) {
 
   const addFiles = (files: FileList | null) => {
     if (!files) return
-    const next: Attachment[] = []
     for (const f of Array.from(files)) {
       const isImg = f.type.startsWith('image/')
-      next.push({
-        id: `att-${ac++}`,
-        kind: isImg ? 'image' : 'file',
-        name: f.name,
-        size: f.size,
-        url: isImg
-          ? `linear-gradient(135deg, hsl(${(ac * 47) % 360} 80% 60%), #0a0a0a)`
-          : undefined,
+      const id = `att-${ac++}`
+      // optimistic preview (local blob) while it uploads to storage
+      const local = isImg ? URL.createObjectURL(f) : undefined
+      setAtts((x) => [
+        ...x,
+        { id, kind: isImg ? 'image' : 'file', name: f.name, size: f.size, url: local, uploading: true },
+      ])
+      uploadMedia(f, f.name).then((publicUrl) => {
+        setAtts((x) =>
+          x.map((a) =>
+            a.id === id ? { ...a, url: publicUrl || a.url, uploading: false } : a,
+          ),
+        )
       })
     }
-    setAtts((a) => [...a, ...next])
   }
 
-  const startRec = () => {
-    setRecording(true)
-    setRecSecs(0)
-    recTimer.current = window.setInterval(() => setRecSecs((s) => s + 1), 1000)
+  const startRec = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      recStream.current = stream
+      recChunks.current = []
+      const rec = new MediaRecorder(stream)
+      rec.ondataavailable = (e) => {
+        if (e.data.size > 0) recChunks.current.push(e.data)
+      }
+      mediaRec.current = rec
+      rec.start()
+      setRecording(true)
+      setRecSecs(0)
+      recTimer.current = window.setInterval(() => setRecSecs((s) => s + 1), 1000)
+    } catch {
+      alert(currentLang === 'ru' ? 'Доступ к микрофону заблокирован.' : 'Microphone access denied.')
+    }
   }
-  const stopRec = (sendIt: boolean) => {
+
+  const cleanupRec = () => {
     clearInterval(recTimer.current)
+    recStream.current?.getTracks().forEach((tr) => tr.stop())
+    recStream.current = null
+    mediaRec.current = null
+  }
+
+  const stopRec = (sendIt: boolean) => {
+    const rec = mediaRec.current
+    const duration = recSecs
     setRecording(false)
-    if (sendIt && recSecs > 0) {
-      const wf = Array.from({ length: 44 }, (_, i) => 0.25 + Math.abs(Math.sin(i * 0.6)) * 0.6)
+    setRecSecs(0)
+    if (!rec) {
+      cleanupRec()
+      return
+    }
+    rec.onstop = async () => {
+      cleanupRec()
+      if (!sendIt || duration < 1) return
+      const blob = new Blob(recChunks.current, { type: rec.mimeType || 'audio/webm' })
+      const publicUrl = await uploadMedia(blob, `voice-${Date.now()}.webm`)
       sendMessage(chatId, '', [
-        { id: `att-${ac++}`, kind: 'voice', name: 'voice.ogg', duration: recSecs, waveform: wf },
+        {
+          id: `voice-${ac++}`,
+          kind: 'voice',
+          name: 'voice.webm',
+          url: publicUrl || URL.createObjectURL(blob),
+          duration,
+          waveform: Array.from({ length: 48 }, () => 0.25 + Math.random() * 0.55),
+        },
       ])
     }
-    setRecSecs(0)
+    rec.stop()
   }
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-4 pb-[104px]">
-      <div className="pointer-events-auto mx-auto max-w-[680px]">
-        {/* reply preview */}
+    <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-4">
+      {/* drag overlay visual helper */}
+      {dragOver && (
+        <div className="pointer-events-none absolute inset-x-4 bottom-4 top-0 rounded-[28px] border-2 border-dashed border-lime bg-lime/10" />
+      )}
+
+      <div className="mx-auto max-w-[720px]">
+        {/* Reply indicator */}
         <AnimatePresence>
           {replyTo && (
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              className="glass mb-2 flex items-center gap-2 rounded-ctrl border border-black/5 px-4 py-2.5"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="glass mb-2 flex items-center justify-between gap-3 rounded-card border border-black/5 p-3.5"
             >
-              <IconReply size={18} className="text-black" />
-              <div className="min-w-0 flex-1 border-l-2 border-lime pl-2">
-                <p className="text-body-s font-bold text-black">
-                  {users[replyTo.authorId]?.name ?? 'Unknown'}
-                </p>
-                <p className="truncate text-body-s text-grey-mid">{replyTo.text || 'Attachment'}</p>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <IconReply size={16} className="shrink-0 text-black" />
+                <div className="min-w-0 border-l-2 border-black/15 pl-2.5">
+                  <p className="text-body-s font-bold text-ink">
+                    {users[replyTo.authorId]?.name || 'User'}
+                  </p>
+                  <p className="truncate text-body-s text-grey-mid">
+                    {replyTo.text || (currentLang === 'ru' ? 'Вложение' : 'Attachment')}
+                  </p>
+                </div>
               </div>
-              <button onClick={() => setReplyTo(null)} className="text-grey-mid hover:text-black">
-                <IconClose size={18} />
+              <button
+                onClick={() => setReplyTo(null)}
+                className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-black/5"
+              >
+                <IconClose size={16} />
               </button>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* attachment chips */}
+        {/* Attachment preview */}
         <AnimatePresence>
           {atts.length > 0 && (
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              className="glass mb-2 flex gap-2 overflow-x-auto rounded-ctrl border border-black/5 p-2 beam-scroll"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="glass mb-2 flex gap-2 overflow-x-auto rounded-card border border-black/5 p-3"
             >
               {atts.map((a) => (
                 <div
                   key={a.id}
                   className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-btn bg-grey-soft"
-                  style={a.kind === 'image' ? { background: a.url } : undefined}
                 >
-                  {a.kind !== 'image' && <IconPaperclip size={20} className="text-grey-mid" />}
+                  {a.kind === 'image' && a.url ? (
+                    <img src={a.url} alt={a.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <IconPaperclip size={20} className="text-grey-mid" />
+                  )}
+                  {a.uploading && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/40">
+                      <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-lime border-t-transparent" />
+                    </span>
+                  )}
                   <button
                     onClick={() => setAtts((x) => x.filter((y) => y.id !== a.id))}
                     className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black text-white"
@@ -144,13 +215,13 @@ export default function Composer({ chatId }: { chatId: string }) {
               <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
             </span>
             <span className="flex-1 font-mono text-body-l font-semibold text-ink">
-              Recording… {secs(recSecs)}
+              {currentLang === 'ru' ? 'Запись…' : 'Recording…'} {secs(recSecs)}
             </span>
             <button
               onClick={() => stopRec(false)}
               className="rounded-pill px-3 py-1.5 text-body-s font-bold text-grey-mid"
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               onClick={() => stopRec(true)}
@@ -185,7 +256,7 @@ export default function Composer({ chatId }: { chatId: string }) {
             <button
               onClick={() => fileRef.current?.click()}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-grey-soft text-ink transition hover:bg-[#e6e6e6]"
-              title="Attach file"
+              title={currentLang === 'ru' ? 'Прикрепить файл' : 'Attach file'}
             >
               <IconPlus size={22} />
             </button>
@@ -203,22 +274,27 @@ export default function Composer({ chatId }: { chatId: string }) {
                   send()
                 }
               }}
-              placeholder={dragOver ? 'Drop files to send' : 'Message…'}
+              placeholder={dragOver ? (currentLang === 'ru' ? 'Перетащите файлы сюда' : 'Drop files to send') : (currentLang === 'ru' ? 'Сообщение…' : 'Message…')}
               className="beam-scroll max-h-[140px] flex-1 resize-none bg-transparent py-2.5 text-body-l text-ink outline-none placeholder:text-grey-mid"
             />
             {text.trim() || atts.length ? (
               <button
                 onClick={send}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-lime transition active:scale-95"
-                title="Send (Enter)"
+                disabled={uploading}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-lime transition active:scale-95 disabled:opacity-50"
+                title={currentLang === 'ru' ? 'Отправить (Enter)' : 'Send (Enter)'}
               >
-                <IconSend size={20} />
+                {uploading ? (
+                  <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-lime border-t-transparent" />
+                ) : (
+                  <IconSend size={20} />
+                )}
               </button>
             ) : (
               <button
                 onClick={startRec}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-grey-soft text-ink transition hover:bg-[#e6e6e6]"
-                title="Record voice"
+                title={currentLang === 'ru' ? 'Записать голос' : 'Record voice'}
               >
                 <IconMic size={20} />
               </button>

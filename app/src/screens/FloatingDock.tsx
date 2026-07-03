@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion'
 import { useStore } from '../store'
-import { IconChat, IconSearch, IconSettings, IconUser } from '../components/Icons'
+import { IconChat, IconSettings, IconUser, IconUsers } from '../components/Icons'
 import type { ViewId } from '../types'
+import { useTranslation } from '../lib/i18n'
 
 // The Floating Dock (Design.pdf §5.1) — a translucent glass "island" of section icons.
 export default function FloatingDock() {
+  const { t } = useTranslation()
   const view = useStore((s) => s.view)
   const setView = useStore((s) => s.setView)
   const openChat = useStore((s) => s.openChat)
@@ -15,10 +17,10 @@ export default function FloatingDock() {
   }
 
   const items: { id: ViewId; icon: React.ReactNode; label: string }[] = [
-    { id: 'chats', icon: <IconChat size={24} />, label: 'Chats' },
-    { id: 'search', icon: <IconSearch size={24} />, label: 'Search' },
-    { id: 'profile', icon: <IconUser size={24} />, label: 'Profile' },
-    { id: 'settings', icon: <IconSettings size={24} />, label: 'Settings' },
+    { id: 'chats', icon: <IconChat size={24} />, label: t('messages') },
+    { id: 'search', icon: <IconUsers size={24} />, label: t('contacts') },
+    { id: 'settings', icon: <IconSettings size={24} />, label: t('settings') },
+    { id: 'profile', icon: <IconUser size={24} />, label: t('profile') },
   ]
 
   return (
@@ -55,11 +57,18 @@ function DockBtn({
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={`flex h-14 w-14 items-center justify-center rounded-full transition-all active:scale-90 ${
-        active ? 'bg-lime text-black' : 'text-ink hover:bg-black/5'
-      }`}
+      className="relative flex h-14 w-14 items-center justify-center rounded-full active:scale-95 text-ink outline-none select-none"
     >
-      {children}
+      {active && (
+        <motion.div
+          layoutId="active-dock-tab"
+          className="absolute inset-0 rounded-full bg-lime shadow-sm"
+          transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+        />
+      )}
+      <span className={`relative z-10 flex items-center justify-center transition-colors duration-200 ${active ? 'text-black' : 'text-ink hover:text-black'}`}>
+        {children}
+      </span>
     </button>
   )
 }

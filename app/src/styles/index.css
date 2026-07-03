@@ -28,24 +28,13 @@ body {
   overflow: hidden;
 }
 
-/* Thin, unobtrusive scrollbars in Beam style */
+/* Hide scrollbars globally */
 .beam-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: #cfcfcf transparent;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
 }
 .beam-scroll::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-.beam-scroll::-webkit-scrollbar-thumb {
-  background: #d2d2d2;
-  border-radius: 100px;
-}
-.beam-scroll::-webkit-scrollbar-thumb:hover {
-  background: #b9b9b9;
-}
-.beam-scroll::-webkit-scrollbar-track {
-  background: transparent;
+  display: none; /* Chrome, Safari and Opera */
 }
 
 @layer components {

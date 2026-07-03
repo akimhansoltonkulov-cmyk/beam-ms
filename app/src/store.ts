@@ -1,6 +1,56 @@
 import { create } from 'zustand'
 import type { Attachment, Chat, Message, Packet, User, ViewId } from './types'
 import { ME, cannedReplies, chats as seedChats, messages as seedMessages, users as seedUsers } from './lib/seed'
+import {
+  dmChatId,
+  fetchMessages,
+  getProfileByHandle,
+  getProfileById,
+  getProfileByPhone,
+  insertMessage,
+  joinPresence,
+  patchMessage,
+  registerProfile,
+  searchProfiles,
+  subscribeToChat,
+  subscribeToInbox,
+  updateProfileInDb,
+  type DbMessage,
+  type SupabaseProfile,
+} from './lib/supabase'
+
+// A chat is backed by real Supabase Realtime when its id is a canonical DM id.
+const isRealChatId = (id: string) => id.startsWith('dm:')
+
+const dbToMessage = (row: DbMessage): Message => ({
+  id: row.id,
+  chatId: row.chat_id,
+  authorId: row.author_id,
+  text: row.text || '',
+  createdAt: new Date(row.created_at).getTime(),
+  status: (row.status as Message['status']) || 'sent',
+  replyToId: row.reply_to_id || undefined,
+  deleted: row.deleted,
+  editedAt: row.edited_at ? new Date(row.edited_at).getTime() : undefined,
+  attachments: row.attachments || undefined,
+  reactions: row.reactions || undefined,
+})
+
+// Live subscription handles (kept outside React state).
+let chatUnsub: (() => void) | null = null
+let inboxUnsub: (() => void) | null = null
+let presenceUnsub: (() => void) | null = null
+
+// Map a Supabase profile row to a local User
+const profileToUser = (p: SupabaseProfile): User => ({
+  id: p.id,
+  name: p.name,
+  handle: `@${p.handle}`,
+  avatar: p.avatar || p.color || '#E1FF00',
+  color: p.color || '#E1FF00',
+  bio: p.bio || 'Independent Beam user',
+  language: p.language || 'en',
+})
 
 let idc = 1000
 const uid = (p: string) => `${p}-${idc++}`
@@ -38,8 +88,16 @@ interface State {
   prefs: Prefs
 
   // auth
-  login: () => void
+  login: (phone: string) => Promise<{ exists: boolean; profile?: User }>
+  register: (phone: string, name: string, handle: string, language: string) => Promise<boolean>
   logout: () => void
+  updateProfile: (updates: {
+    name: string
+    handle: string
+    bio: string
+    avatar?: string
+    color?: string
+  }) => Promise<boolean>
 
   // navigation
   setView: (v: ViewId) => void
@@ -57,13 +115,27 @@ interface State {
   markRead: (chatId: string) => void
   setDraft: (chatId: string, draft: string) => void
 
+  // chat management
+  togglePinChat: (chatId: string) => void
+  archiveChat: (chatId: string) => void
+  deleteChat: (chatId: string) => void
+
+  // contacts
+  addContact: (query: string) => Promise<{ success: boolean; error?: string; profile?: User }>
+  searchUsers: (query: string) => Promise<User[]>
+  startChat: (userId: string) => void
+
   // prefs
   setPref: <K extends keyof Prefs>(k: K, v: Prefs[K]) => void
   exportData: () => string
 
   // internal
   _log: (p: Omit<Packet, 'id' | 'ts'>) => void
+  _upsertMessage: (m: Message) => void
+  _startInbox: () => void
 }
+
+const isRealUserId = (id?: string) => !!id && id.startsWith('u-')
 
 // Approximate encoded size of a protobuf-ish payload
 const sizeOf = (text: string, atts?: Attachment[]) =>
@@ -96,22 +168,252 @@ export const useStore = create<State>((set, get) => ({
     soundOn: true,
   },
 
-  login: () => {
+  login: async (phone: string) => {
     set({ booting: true })
-    // Cold start < 1.5s (About.pdf) — simulate the WASM/bundle warm-up
-    setTimeout(() => {
-      set({ authed: true, booting: false })
-      get()._log({ dir: 'out', op: 'ws.open', bytes: 24, summary: 'Binary WebSocket established', encrypted: true, latencyMs: 41 })
-      get()._log({ dir: 'in', op: 'sync.delta', bytes: 512, summary: 'Top-20 chats hydrated (delta)', encrypted: true, latencyMs: 96 })
-    }, 1400)
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const profile = await getProfileByPhone(phone)
+      if (profile) {
+        const meUser: User = {
+          id: profile.id,
+          name: profile.name,
+          handle: `@${profile.handle}`,
+          avatar: profile.avatar || '#E1FF00',
+          color: profile.color || '#E1FF00',
+          bio: profile.bio || 'Independent Beam user',
+          language: profile.language || 'en',
+        }
+        // Add profile to local users seed dictionary so avatars render
+        const updatedUsers = { ...get().users, [profile.id]: meUser }
+        set({ me: meUser, users: updatedUsers, authed: true, booting: false })
+        get()._log({ dir: 'out', op: 'ws.open', bytes: 24, summary: 'Binary WebSocket established', encrypted: true, latencyMs: 41 })
+        get()._log({ dir: 'in', op: 'sync.delta', bytes: 512, summary: 'Top-20 chats hydrated (delta)', encrypted: true, latencyMs: 96 })
+        get()._startInbox()
+        return { exists: true, profile: meUser }
+      } else {
+        set({ booting: false })
+        return { exists: false }
+      }
+    } catch (e) {
+      console.error('Exception inside login store action:', e)
+      set({ booting: false })
+      return { exists: false }
+    }
   },
 
-  logout: () => set({ authed: false, activeChatId: null, view: 'chats' }),
+  register: async (phone: string, name: string, handle: string, language: string) => {
+    set({ booting: true })
+    try {
+      const colors = ['#E1FF00', '#FF3B30', '#34C759', '#007AFF', '#AF52DE']
+      const color = colors[Math.floor(Math.random() * colors.length)]
+      const newProfile = await registerProfile({
+        phone,
+        name,
+        handle,
+        language,
+        avatar: color,
+        color,
+        bio: `Using Beam in ${language === 'ru' ? 'Русский' : 'English'} · Zero footprints`,
+      })
+      if (newProfile) {
+        const meUser: User = {
+          id: newProfile.id,
+          name: newProfile.name,
+          handle: `@${newProfile.handle}`,
+          avatar: newProfile.avatar,
+          color: newProfile.color,
+          bio: newProfile.bio,
+          language: newProfile.language,
+        }
+        const updatedUsers = { ...get().users, [newProfile.id]: meUser }
+        set({ me: meUser, users: updatedUsers, authed: true, booting: false })
+        get()._log({ dir: 'out', op: 'ws.open', bytes: 24, summary: 'Binary WebSocket established', encrypted: true, latencyMs: 41 })
+        get()._log({ dir: 'in', op: 'sync.delta', bytes: 512, summary: 'Registered & Syncing delta', encrypted: true, latencyMs: 96 })
+        get()._startInbox()
+        return true
+      } else {
+        set({ booting: false })
+        return false
+      }
+    } catch (e) {
+      console.error('Exception inside register store action:', e)
+      set({ booting: false })
+      return false
+    }
+  },
+
+  logout: () => {
+    if (chatUnsub) {
+      chatUnsub()
+      chatUnsub = null
+    }
+    if (inboxUnsub) {
+      inboxUnsub()
+      inboxUnsub = null
+    }
+    if (presenceUnsub) {
+      presenceUnsub()
+      presenceUnsub = null
+    }
+    set({ authed: false, activeChatId: null, view: 'chats' })
+  },
+
+  updateProfile: async (updates) => {
+    const me = get().me
+    if (!me) return false
+    try {
+      const cleanHandle = updates.handle.replace(/^@/, '')
+      const ok = await updateProfileInDb(me.id, {
+        name: updates.name,
+        handle: cleanHandle,
+        bio: updates.bio,
+        avatar: updates.avatar,
+        color: updates.color || me.color,
+      })
+      if (!ok) throw new Error('update failed')
+
+      const updatedMe: User = {
+        ...me,
+        name: updates.name,
+        handle: `@${cleanHandle}`,
+        bio: updates.bio,
+        avatar: updates.avatar || '',
+        color: updates.color || me.color,
+      }
+      set({ me: updatedMe })
+      return true
+    } catch (e) {
+      console.error('Exception updating profile:', e)
+      return false
+    }
+  },
+
+  addContact: async (query: string) => {
+    try {
+      const raw = query.trim()
+      // Detect nickname (@handle or letters) vs phone number
+      const looksLikeHandle = raw.startsWith('@') || /[a-zA-Z_]/.test(raw)
+      const profile = looksLikeHandle
+        ? (await getProfileByHandle(raw)) || (await getProfileByPhone(raw))
+        : (await getProfileByPhone(raw)) || (await getProfileByHandle(raw))
+      if (profile) {
+        if (profile.id === get().me?.id) {
+          return { success: false, error: 'That is you' }
+        }
+        const contactUser = profileToUser(profile)
+        set((s) => ({ users: { ...s.users, [profile.id]: contactUser } }))
+        return { success: true, profile: contactUser }
+      }
+      return { success: false, error: 'User not found' }
+    } catch (e) {
+      console.error('Exception adding contact:', e)
+      return { success: false, error: 'Database error' }
+    }
+  },
+
+  searchUsers: async (query: string) => {
+    const profiles = await searchProfiles(query)
+    const meId = get().me?.id
+    const found = profiles.filter((p) => p.id !== meId && p.id !== 'me').map(profileToUser)
+    if (found.length) {
+      set((s) => {
+        const users = { ...s.users }
+        for (const u of found) users[u.id] = u
+        return { users }
+      })
+    }
+    return found
+  },
+
+  startChat: (userId: string) => {
+    const meId = get().me?.id || 'me'
+    const existingChat = get().chats.find(
+      (c) =>
+        c.kind === 'dm' &&
+        c.members.includes(userId) &&
+        (c.members.includes(meId) || c.members.includes('me')),
+    )
+    if (existingChat) {
+      set({ view: 'chats' })
+      get().openChat(existingChat.id)
+      return
+    }
+    const other = get().users[userId]
+    const real = isRealUserId(userId) && isRealUserId(meId)
+    const newChat: Chat = real
+      ? {
+          id: dmChatId(meId, userId),
+          kind: 'dm',
+          name: other?.name || 'User',
+          avatar: '',
+          color: other?.color || '#E1FF00',
+          members: [meId, userId],
+          via: 'Via Beam',
+        }
+      : {
+          id: `c-${userId}`,
+          kind: 'dm',
+          name: other?.name || 'User',
+          avatar: '',
+          color: other?.color || '#E1FF00',
+          members: ['me', userId],
+          via: 'Via Beam',
+        }
+    set((s) => ({ chats: [...s.chats, newChat], view: 'chats' }))
+    get().openChat(newChat.id)
+  },
+
+  togglePinChat: (chatId: string) => {
+    set((s) => ({
+      chats: s.chats.map((c) => (c.id === chatId ? { ...c, pinned: !c.pinned } : c)),
+    }))
+  },
+
+  archiveChat: (chatId: string) => {
+    set((s) => ({
+      chats: s.chats.map((c) => (c.id === chatId ? { ...c, archived: true } : c)),
+    }))
+  },
+
+  deleteChat: (chatId: string) => {
+    set((s) => ({
+      chats: s.chats.filter((c) => c.id !== chatId),
+      activeChatId: get().activeChatId === chatId ? null : get().activeChatId,
+    }))
+  },
 
   setView: (v) => set({ view: v, transparencyOpen: v === 'transparency' ? true : get().transparencyOpen }),
   openChat: (id) => {
+    // tear down previous per-chat subscription
+    if (chatUnsub) {
+      chatUnsub()
+      chatUnsub = null
+    }
     set({ activeChatId: id, replyTo: null })
-    if (id) get().markRead(id)
+    if (!id) return
+    get().markRead(id)
+
+    if (isRealChatId(id)) {
+      const meId = get().me?.id
+      // hydrate history from Supabase
+      fetchMessages(id).then((rows) => {
+        rows.forEach((r) => get()._upsertMessage(dbToMessage(r)))
+        // send read receipts for the other party's messages
+        rows
+          .filter((r) => r.author_id !== meId && r.status !== 'read')
+          .forEach((r) => patchMessage(r.id, { status: 'read' }))
+        get().markRead(id)
+      })
+      // live updates (inserts, edits, deletes, read receipts)
+      chatUnsub = subscribeToChat(id, (_evt, row) => {
+        const msg = dbToMessage(row)
+        get()._upsertMessage(msg)
+        // if the incoming message is from the peer and chat is open, mark it read
+        if (msg.authorId !== meId && get().activeChatId === id && msg.status !== 'read') {
+          patchMessage(msg.id, { status: 'read' })
+        }
+      })
+    }
   },
   toggleTransparency: (v) => set((s) => ({ transparencyOpen: v ?? !s.transparencyOpen })),
   setSearch: (q) => set({ searchQuery: q }),
@@ -120,12 +422,15 @@ export const useStore = create<State>((set, get) => ({
   sendMessage: (chatId, text, attachments) => {
     const t = text.trim()
     if (!t && !(attachments && attachments.length)) return
+    const meId = get().me?.id || 'me'
+    const chat = get().chats.find((c) => c.id === chatId)
+    const real = !!chat && isRealChatId(chatId)
     const id = uid('m')
     const replyToId = get().replyTo?.id
     const msg: Message = {
       id,
       chatId,
-      authorId: ME,
+      authorId: real ? meId : ME,
       text: t,
       createdAt: Date.now(),
       status: 'sending', // Optimistic UI — appears immediately
@@ -134,6 +439,18 @@ export const useStore = create<State>((set, get) => ({
     }
     set((s) => ({ messages: [...s.messages, msg], replyTo: null }))
     get()._log({ dir: 'out', op: 'msg.send', bytes: sizeOf(t, attachments), summary: `→ ${chatId} · optimistic`, encrypted: true })
+
+    // Real chat → persist to Supabase and let Realtime deliver to the peer.
+    if (real) {
+      const other = chat!.members.find((m) => m !== meId)
+      insertMessage({ id, chat_id: chatId, author_id: meId, recipient_id: other, text: t, reply_to_id: replyToId, attachments }).then(
+        (ok) => {
+          set((s) => ({ messages: s.messages.map((m) => (m.id === id ? { ...m, status: ok ? 'sent' : 'sending' } : m)) }))
+          if (ok) get()._log({ dir: 'in', op: 'msg.ack', bytes: 12, summary: `ack ${id.slice(-4)}`, encrypted: true, latencyMs: 90 })
+        },
+      )
+      return
+    }
 
     // Instant delivery guarantee (<200ms) — ack over the binary channel
     const latency = 60 + Math.floor(Math.random() * 120)
@@ -146,8 +463,7 @@ export const useStore = create<State>((set, get) => ({
       set((s) => ({ messages: s.messages.map((m) => (m.id === id ? { ...m, status: 'read' } : m)) }))
     }, latency + 700)
 
-    // Canned reply + typing from the other party (dm only)
-    const chat = get().chats.find((c) => c.id === chatId)
+    // Canned reply + typing from the other party (demo dm only)
     if (chat && chat.kind === 'dm') {
       const other = chat.members.find((u) => u !== ME)!
       if (!get().online[other]) return
@@ -176,38 +492,48 @@ export const useStore = create<State>((set, get) => ({
   },
 
   editMessage: (id, text) => {
-    set((s) => ({ messages: s.messages.map((m) => (m.id === id ? { ...m, text: text.trim(), editedAt: Date.now() } : m)) }))
+    const m = get().messages.find((x) => x.id === id)
+    set((s) => ({ messages: s.messages.map((x) => (x.id === id ? { ...x, text: text.trim(), editedAt: Date.now() } : x)) }))
     get()._log({ dir: 'out', op: 'msg.edit', bytes: sizeOf(text), summary: `edit ${id.slice(-4)}`, encrypted: true })
+    if (m && isRealChatId(m.chatId)) patchMessage(id, { text: text.trim(), edited_at: new Date().toISOString() })
   },
 
   deleteMessage: (id, forEveryone) => {
+    const m = get().messages.find((x) => x.id === id)
     set((s) => ({
-      messages: s.messages.map((m) => (m.id === id ? { ...m, deleted: true, text: '', attachments: undefined } : m)),
+      messages: s.messages.map((x) => (x.id === id ? { ...x, deleted: true, text: '', attachments: undefined } : x)),
     }))
     get()._log({ dir: 'out', op: forEveryone ? 'msg.unsend' : 'msg.delete', bytes: 12, summary: `${forEveryone ? 'unsend' : 'delete'} ${id.slice(-4)}`, encrypted: true })
+    if (m && isRealChatId(m.chatId) && forEveryone) patchMessage(id, { deleted: true, text: '' })
   },
 
   togglePin: (id) =>
     set((s) => ({ messages: s.messages.map((m) => (m.id === id ? { ...m, pinned: !m.pinned } : m)) })),
 
-  react: (id, emoji) =>
-    set((s) => ({
-      messages: s.messages.map((m) => {
-        if (m.id !== id) return m
-        const reactions = { ...(m.reactions ?? {}) }
-        const arr = new Set(reactions[emoji] ?? [])
-        if (arr.has(ME)) arr.delete(ME)
-        else arr.add(ME)
-        if (arr.size === 0) delete reactions[emoji]
-        else reactions[emoji] = [...arr]
-        return { ...m, reactions }
-      }),
-    })),
+  react: (id, emoji) => {
+    const meId = get().me?.id || ME
+    const msg = get().messages.find((m) => m.id === id)
+    if (!msg) return
+    const real = isRealChatId(msg.chatId)
+    const key = real ? meId : ME
+    const reactions: Record<string, string[]> = { ...(msg.reactions ?? {}) }
+    const arr = new Set(reactions[emoji] ?? [])
+    if (arr.has(key)) arr.delete(key)
+    else arr.add(key)
+    if (arr.size === 0) delete reactions[emoji]
+    else reactions[emoji] = [...arr]
+    set((s) => ({ messages: s.messages.map((m) => (m.id === id ? { ...m, reactions } : m)) }))
+    if (real) patchMessage(id, { reactions })
+  },
 
-  markRead: (chatId) =>
+  markRead: (chatId) => {
+    const meId = get().me?.id
     set((s) => ({
-      messages: s.messages.map((m) => (m.chatId === chatId && m.authorId !== ME ? { ...m, status: 'read' } : m)),
-    })),
+      messages: s.messages.map((m) =>
+        m.chatId === chatId && m.authorId !== ME && m.authorId !== meId ? { ...m, status: 'read' } : m,
+      ),
+    }))
+  },
 
   setDraft: (chatId, draft) =>
     set((s) => ({ chats: s.chats.map((c) => (c.id === chatId ? { ...c, draft } : c)) })),
@@ -224,6 +550,73 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({
       packets: [{ ...p, id: uid('pkt'), ts: Date.now() }, ...s.packets].slice(0, 120),
     })),
+
+  _upsertMessage: (m) =>
+    set((s) => {
+      const idx = s.messages.findIndex((x) => x.id === m.id)
+      if (idx >= 0) {
+        const next = s.messages.slice()
+        next[idx] = { ...next[idx], ...m }
+        return { messages: next }
+      }
+      return { messages: [...s.messages, m] }
+    }),
+
+  _startInbox: () => {
+    if (inboxUnsub) {
+      inboxUnsub()
+      inboxUnsub = null
+    }
+    const meId = get().me?.id
+    if (!isRealUserId(meId)) return
+
+    // Presence — reflect who is online among real users
+    if (presenceUnsub) {
+      presenceUnsub()
+      presenceUnsub = null
+    }
+    presenceUnsub = joinPresence(meId!, (ids) => {
+      const present = new Set(ids)
+      set((s) => {
+        const online = { ...s.online }
+        for (const uid of Object.keys(s.users)) {
+          if (isRealUserId(uid)) online[uid] = present.has(uid)
+        }
+        online[meId!] = true
+        return { online }
+      })
+    })
+
+    inboxUnsub = subscribeToInbox(meId!, async (row) => {
+      const msg = dbToMessage(row)
+      if (msg.authorId === meId) return
+      // ensure a chat exists for this incoming DM
+      let chat = get().chats.find((c) => c.id === msg.chatId)
+      if (!chat) {
+        let author = get().users[msg.authorId]
+        if (!author) {
+          const p = await getProfileById(msg.authorId)
+          if (p) {
+            author = profileToUser(p)
+            set((s) => ({ users: { ...s.users, [p.id]: author! } }))
+          }
+        }
+        chat = {
+          id: msg.chatId,
+          kind: 'dm',
+          name: author?.name || 'User',
+          avatar: '',
+          color: author?.color || '#E1FF00',
+          members: [meId!, msg.authorId],
+          via: 'Via Beam',
+        }
+        set((s) => ({ chats: [...s.chats, chat!] }))
+      }
+      const status: Message['status'] = get().activeChatId === msg.chatId ? 'read' : 'delivered'
+      get()._upsertMessage({ ...msg, status })
+      get()._log({ dir: 'in', op: 'msg.recv', bytes: 12 + msg.text.length, summary: `← ${msg.authorId}`, encrypted: true, latencyMs: 74 })
+    })
+  },
 }))
 
 // Selectors

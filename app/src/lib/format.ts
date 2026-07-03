@@ -33,10 +33,12 @@ export function bytes(n?: number): string {
   return `${(n / (1024 * 1024 * 1024)).toFixed(1)} GB`
 }
 
-export function initials(name: string): string {
+export function initials(name?: string): string {
+  if (!name) return '?'
   const p = name.trim().split(/\s+/)
+  if (p.length === 0 || !p[0]) return '?'
   if (p.length === 1) return p[0].slice(0, 2).toUpperCase()
-  return (p[0][0] + p[p.length - 1][0]).toUpperCase()
+  return ((p[0]?.[0] || '') + (p[p.length - 1]?.[0] || '')).toUpperCase() || '?'
 }
 
 export function secs(s?: number): string {
