@@ -1,0 +1,65 @@
+import { motion } from 'framer-motion'
+import { useStore } from '../store'
+import { IconChat, IconSearch, IconSettings, IconUser } from '../components/Icons'
+import type { ViewId } from '../types'
+
+// The Floating Dock (Design.pdf §5.1) — a translucent glass "island" of section icons.
+export default function FloatingDock() {
+  const view = useStore((s) => s.view)
+  const setView = useStore((s) => s.setView)
+  const openChat = useStore((s) => s.openChat)
+
+  const go = (v: ViewId) => {
+    if (v === 'chats') openChat(null)
+    setView(v)
+  }
+
+  const items: { id: ViewId; icon: React.ReactNode; label: string }[] = [
+    { id: 'chats', icon: <IconChat size={24} />, label: 'Chats' },
+    { id: 'search', icon: <IconSearch size={24} />, label: 'Search' },
+    { id: 'profile', icon: <IconUser size={24} />, label: 'Profile' },
+    { id: 'settings', icon: <IconSettings size={24} />, label: 'Settings' },
+  ]
+
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-5 z-40 flex justify-center">
+      <motion.div
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 24, delay: 0.15 }}
+        className="glass pointer-events-auto flex items-center gap-2 rounded-pill border border-white/40 p-2 shadow-dock"
+      >
+        {items.map((it) => (
+          <DockBtn key={it.id} active={view === it.id} onClick={() => go(it.id)} label={it.label}>
+            {it.icon}
+          </DockBtn>
+        ))}
+      </motion.div>
+    </div>
+  )
+}
+
+function DockBtn({
+  children,
+  active,
+  onClick,
+  label,
+}: {
+  children: React.ReactNode
+  active?: boolean
+  onClick: () => void
+  label: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className={`flex h-14 w-14 items-center justify-center rounded-full transition-all active:scale-90 ${
+        active ? 'bg-lime text-black' : 'text-ink hover:bg-black/5'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
