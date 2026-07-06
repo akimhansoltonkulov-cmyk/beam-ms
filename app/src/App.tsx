@@ -8,6 +8,7 @@ import FloatingDock from './screens/FloatingDock'
 import SettingsPanel from './screens/SettingsPanel'
 import ProfilePanel from './screens/ProfilePanel'
 import CallOverlay from './screens/CallOverlay'
+import InstallBanner from './screens/InstallBanner'
 
 export default function App() {
   const authed = useStore((s) => s.authed)
@@ -81,6 +82,9 @@ export default function App() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Install-as-app banner (only in the list/settings views, not inside a chat) */}
+            {!activeChatId && <InstallBanner />}
 
             {/* Floating glass dock (hidden inside a chat) */}
             {!activeChatId && <FloatingDock />}
