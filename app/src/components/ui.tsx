@@ -28,7 +28,7 @@ export function Avatar({
           style={{
             width: size,
             height: size,
-            boxShadow: ring ? '0 0 0 2px #E1FF00' : undefined,
+            boxShadow: ring ? '0 0 0 1.5px #000000' : undefined,
           }}
         />
       ) : (
@@ -38,9 +38,9 @@ export function Avatar({
             width: size,
             height: size,
             background: color,
-            color: dark ? '#E1FF00' : '#0a0a0a',
+            color: dark ? '#FFFFFF' : '#000000',
             fontSize: size * 0.36,
-            boxShadow: ring ? '0 0 0 2px #E1FF00' : undefined,
+            boxShadow: ring ? '0 0 0 1.5px #000000' : undefined,
           }}
         >
           {initials(name)}
@@ -52,7 +52,7 @@ export function Avatar({
           style={{
             width: size * 0.28,
             height: size * 0.28,
-            background: online ? '#22C55E' : '#C4C4C6',
+            background: online ? '#000000' : '#C4C4C6',
           }}
         />
       )}
@@ -78,7 +78,7 @@ export function Toggle({
   onChange: (v: boolean) => void
   label?: string
 }) {
-  // Switch spec (Design.pdf §5.3): black track, acid-lime knob, 100px radius
+  // Monochrome switch: black track when on, white knob, hairline when off.
   return (
     <button
       type="button"
@@ -87,14 +87,14 @@ export function Toggle({
       aria-label={label}
       onClick={() => onChange(!on)}
       className="focus-lime relative h-8 w-[58px] shrink-0 rounded-pill transition-colors duration-200"
-      style={{ background: on ? '#000' : '#D8D8DA' }}
+      style={{ background: on ? '#000' : '#E4E4E4' }}
     >
       <span
         className="absolute top-1 h-6 w-6 rounded-full transition-all duration-200"
         style={{
           left: on ? 30 : 4,
-          background: on ? '#E1FF00' : '#fff',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+          background: '#fff',
+          boxShadow: on ? 'none' : 'inset 0 0 0 1px #D0D0D0',
         }}
       />
     </button>
@@ -117,7 +117,7 @@ export function Pill({
       type="button"
       onClick={onClick}
       className={`focus-lime inline-flex items-center gap-1.5 rounded-pill px-3.5 py-2 text-body-s font-semibold transition-all ${
-        active ? 'bg-lime text-black' : 'bg-grey-soft text-ink hover:bg-[#E9E9E9]'
+        active ? 'bg-black text-white' : 'bg-grey-soft text-ink hover:bg-[#E9E9E9]'
       } ${className}`}
     >
       {children}
@@ -148,7 +148,7 @@ export function IconButton({
       onClick={onClick}
       style={{ width: size, height: size }}
       className={`focus-lime inline-flex items-center justify-center rounded-full transition-all active:scale-95 ${
-        active ? 'bg-lime text-black' : 'bg-grey-soft text-ink hover:bg-[#E9E9E9]'
+        active ? 'bg-black text-white' : 'bg-grey-soft text-ink hover:bg-[#E9E9E9]'
       } ${className}`}
     >
       {children}

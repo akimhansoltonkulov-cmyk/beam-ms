@@ -67,7 +67,7 @@ function MemberPicker({
                 style={{
                   borderColor: on ? '#000' : '#C4C4C6',
                   background: on ? '#000' : 'transparent',
-                  color: '#E1FF00',
+                  color: '#FFFFFF',
                 }}
               >
                 {on && <IconCheck size={14} />}
@@ -159,7 +159,7 @@ export function CreateGroupModal({ kind, onClose }: { kind: 'group' | 'channel';
       <button
         onClick={create}
         disabled={!name.trim()}
-        className="mt-6 w-full rounded-pill bg-black py-3.5 text-btn text-lime transition active:scale-[0.98] disabled:opacity-40"
+        className="mt-6 w-full rounded-pill bg-black py-3.5 text-btn text-white transition active:scale-[0.98] disabled:opacity-40"
       >
         {isChannel ? (ru ? 'Создать канал' : 'Create channel') : (ru ? 'Создать группу' : 'Create group')}
       </button>
@@ -248,7 +248,7 @@ export function EditChatModal({ chatId, onClose }: { chatId: string; onClose: ()
         <button
           onClick={save}
           disabled={!name.trim()}
-          className="w-full rounded-pill bg-black py-3.5 text-btn text-lime transition active:scale-[0.98] disabled:opacity-40"
+          className="w-full rounded-pill bg-black py-3.5 text-btn text-white transition active:scale-[0.98] disabled:opacity-40"
         >
           {ru ? 'Сохранить' : 'Save changes'}
         </button>

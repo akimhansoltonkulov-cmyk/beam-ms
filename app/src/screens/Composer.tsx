@@ -138,7 +138,7 @@ export default function Composer({ chatId }: { chatId: string }) {
     <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-4">
       {/* drag overlay visual helper */}
       {dragOver && (
-        <div className="pointer-events-none absolute inset-x-4 bottom-4 top-0 rounded-[28px] border-2 border-dashed border-lime bg-lime/10" />
+        <div className="pointer-events-none absolute inset-x-4 bottom-4 top-0 rounded-[28px] border-2 border-dashed border-black bg-black/[0.05]" />
       )}
 
       <div className="mx-auto max-w-[720px]">
@@ -193,7 +193,7 @@ export default function Composer({ chatId }: { chatId: string }) {
                   )}
                   {a.uploading && (
                     <span className="absolute inset-0 flex items-center justify-center bg-black/40">
-                      <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-lime border-t-transparent" />
+                      <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-black border-t-transparent" />
                     </span>
                   )}
                   <button
@@ -225,7 +225,7 @@ export default function Composer({ chatId }: { chatId: string }) {
             </button>
             <button
               onClick={() => stopRec(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-black text-lime"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-black text-white"
             >
               <IconSend size={20} />
             </button>
@@ -243,7 +243,7 @@ export default function Composer({ chatId }: { chatId: string }) {
               addFiles(e.dataTransfer.files)
             }}
             className={`glass flex items-end gap-2 rounded-[28px] border p-2 transition-colors ${
-              dragOver ? 'border-lime bg-lime/20' : 'border-black/5'
+              dragOver ? 'border-black bg-black/[0.05]' : 'border-black/5'
             }`}
           >
             <input
@@ -281,11 +281,11 @@ export default function Composer({ chatId }: { chatId: string }) {
               <button
                 onClick={send}
                 disabled={uploading}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-lime transition active:scale-95 disabled:opacity-50"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black text-white transition active:scale-95 disabled:opacity-50"
                 title={currentLang === 'ru' ? 'Отправить (Enter)' : 'Send (Enter)'}
               >
                 {uploading ? (
-                  <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-lime border-t-transparent" />
+                  <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-black border-t-transparent" />
                 ) : (
                   <IconSend size={20} />
                 )}

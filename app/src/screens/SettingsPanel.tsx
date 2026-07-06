@@ -74,7 +74,7 @@ export default function SettingsPanel() {
                 key={m}
                 onClick={() => setPref('selfDestructMonths', m)}
                 className={`rounded-pill px-4 py-2 text-body-s font-bold transition ${
-                  prefs.selfDestructMonths === m ? 'bg-black text-lime' : 'bg-grey-soft text-ink'
+                  prefs.selfDestructMonths === m ? 'bg-black text-white' : 'bg-grey-soft text-ink'
                 }`}
               >
                 {m === 0
@@ -96,7 +96,7 @@ export default function SettingsPanel() {
           onClick={doExport}
           className="flex w-full items-center gap-3 rounded-ctrl bg-grey-soft p-4 text-left transition hover:bg-[#e9e9e9]"
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-lime text-black">
+          <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-black text-white">
             <IconDownload size={20} />
           </span>
           <div className="flex-1">
@@ -121,7 +121,7 @@ export default function SettingsPanel() {
           disabled={installed}
           className="flex w-full items-center gap-3 rounded-ctrl bg-black p-4 text-left text-white transition hover:bg-[#1a1a1a] disabled:opacity-60"
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-lime text-black">
+          <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-black text-white">
             <IconGrid size={20} />
           </span>
           <div className="flex-1">
@@ -147,7 +147,7 @@ export default function SettingsPanel() {
       {/* danger */}
       <button
         onClick={logout}
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-btn border-2 border-black py-3.5 text-btn text-black transition hover:bg-black hover:text-lime"
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-btn border-2 border-black py-3.5 text-btn text-black transition hover:bg-black hover:text-white"
       >
         <IconLogout size={18} /> {t('logout')}
       </button>
@@ -171,7 +171,7 @@ function Section({
   return (
     <div className="mt-6 rounded-card bg-white/70 p-5">
       <div className="mb-4 flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-lime text-black">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black text-white">
           {icon}
         </span>
         <h2 className="text-section text-black">{title}</h2>
@@ -211,7 +211,7 @@ function SessionRow({ name, meta, current }: { name: string; meta: string; curre
         <p className="text-body-s text-grey-mid">{meta}</p>
       </div>
       {current ? (
-        <span className="rounded-pill bg-lime px-3 py-1 text-body-s font-bold text-black">Active</span>
+        <span className="rounded-pill bg-black px-3 py-1 text-body-s font-bold text-black">Active</span>
       ) : (
         <button
           onClick={() => setEnded(true)}

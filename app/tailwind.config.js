@@ -4,16 +4,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Beam brand palette (Design.pdf §1)
+        // Monochrome atelier palette — Ink on Paper, Graphite/Stone for hierarchy.
         black: '#000000',
-        lime: '#E1FF00', // Accent Lime (Acid)
+        lime: '#E1FF00', // kept ONLY for the tab bar (FloatingDock) accent
         'lime-soft': '#EEFF7A',
         'lime-tint': '#F4FFB0',
         white: '#FFFFFF',
-        'grey-soft': '#F2F2F2', // Soft Grey — secondary surfaces / inputs
-        'grey-mid': '#8E8E93', // Medium Grey — secondary text / icons
-        'grey-line': '#E6E6E6',
-        ink: '#0A0A0A',
+        paper: '#FFFFFF',
+        graphite: '#858585',
+        stone: '#8E8E90',
+        'grey-soft': '#F4F4F4', // secondary surfaces / inputs
+        'grey-mid': '#8E8E90', // secondary text / icons (Graphite/Stone)
+        'grey-line': '#E7E7E7',
+        ink: '#000000',
       },
       fontFamily: {
         sans: [
@@ -26,22 +29,22 @@ export default {
         ],
       },
       fontSize: {
-        // Typography scale (Mobile UI Kit spec)
-        display: ['24px', { lineHeight: '32px', letterSpacing: '-0.01em', fontWeight: '700' }], // H1 / Headline
-        section: ['20px', { lineHeight: '26px', letterSpacing: '-0.005em', fontWeight: '700' }], // H2 / Title
-        subtitle: ['18px', { lineHeight: '24px', letterSpacing: '0em', fontWeight: '600' }], // H3 / Subtitle
-        t1: ['16px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '500' }], // Title 1 / UI
-        btn: ['16px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '600' }], // Button Text
-        'body-l': ['16px', { lineHeight: '24px', letterSpacing: '0em', fontWeight: '400' }], // Body / Main
-        'body-s': ['14px', { lineHeight: '18px', letterSpacing: '0.01em', fontWeight: '400' }], // Caption / Small
-        overline: ['12px', { lineHeight: '16px', letterSpacing: '0.02em', fontWeight: '700' }], // Overline
+        // Restrained scale — single-ish weight (atelier). Regularity is the signature.
+        display: ['23px', { lineHeight: '28px', letterSpacing: '-0.017em', fontWeight: '500' }], // H1 / Headline
+        section: ['19px', { lineHeight: '24px', letterSpacing: '-0.017em', fontWeight: '500' }], // H2 / Title
+        subtitle: ['16px', { lineHeight: '22px', letterSpacing: '-0.01em', fontWeight: '500' }], // H3 / Subtitle
+        t1: ['15px', { lineHeight: '20px', letterSpacing: '-0.01em', fontWeight: '400' }], // Title 1 / UI
+        btn: ['15px', { lineHeight: '20px', letterSpacing: '-0.01em', fontWeight: '500' }], // Button Text
+        'body-l': ['15px', { lineHeight: '22px', letterSpacing: '-0.01em', fontWeight: '400' }], // Body / Main
+        'body-s': ['13px', { lineHeight: '17px', letterSpacing: '-0.01em', fontWeight: '400' }], // Caption / Small
+        overline: ['12px', { lineHeight: '16px', letterSpacing: '0.04em', fontWeight: '500' }], // Overline
       },
       borderRadius: {
-        // Extreme radii (Design.pdf §3)
-        card: '32px',
-        ctrl: '24px',
-        btn: '16px',
-        pill: '100px',
+        // Crisp, consistent radii (atelier): cards square-ish, buttons pill.
+        card: '14px',
+        ctrl: '12px',
+        btn: '10px',
+        pill: '9999px',
       },
       spacing: {
         gutter: '20px',
@@ -51,9 +54,10 @@ export default {
         glass: '20px',
       },
       boxShadow: {
-        dock: '0 12px 40px -8px rgba(0,0,0,0.28)',
-        card: '0 2px 20px -8px rgba(0,0,0,0.10)',
-        lift: '0 20px 60px -20px rgba(0,0,0,0.35)',
+        // Flatness is the philosophy — borders do the work of shadows.
+        dock: '0 12px 40px -8px rgba(0,0,0,0.28)', // tab bar keeps its lift
+        card: '0 0 0 1px #ECECEC',
+        lift: '0 0 0 1px rgba(0,0,0,0.14)',
       },
       keyframes: {
         'pop-in': {
