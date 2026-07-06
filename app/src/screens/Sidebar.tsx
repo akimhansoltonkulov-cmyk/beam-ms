@@ -1,20 +1,24 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '../store'
+import { AnimatePresence } from 'framer-motion'
 import { Avatar, IconButton, Pill } from '../components/ui'
-import { IconChecks, IconGrid, IconSearch, IconPlus } from '../components/Icons'
+import { IconChat, IconChecks, IconSearch, IconPlus, IconUsers } from '../components/Icons'
 import { relative } from '../lib/format'
 import type { Chat, Message } from '../types'
 import { useTranslation } from '../lib/i18n'
+import { CreateGroupModal } from './GroupModals'
 
 export default function Sidebar() {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const addContact = useStore((s) => s.addContact)
   const searchUsers = useStore((s) => s.searchUsers)
   const startChat = useStore((s) => s.startChat)
   const [showAddModal, setShowAddModal] = useState(false)
   const [newContactPhone, setNewContactPhone] = useState('')
   const [dirLoading, setDirLoading] = useState(false)
+  const [showNewMenu, setShowNewMenu] = useState(false)
+  const [createKind, setCreateKind] = useState<'group' | 'channel' | null>(null)
 
   const chats = useStore((s) => s.chats)
   const messages = useStore((s) => s.messages)
@@ -108,18 +112,62 @@ export default function Sidebar() {
             Binary link · {t('online')}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="relative flex gap-2">
           {searching ? (
             <IconButton title={t('add_contact')} onClick={() => setShowAddModal(true)}>
               <IconPlus size={18} />
             </IconButton>
           ) : (
-            <IconButton title={t('new_chat')}>
-              <IconGrid size={18} />
+            <IconButton title={t('new_chat')} active={showNewMenu} onClick={() => setShowNewMenu((v) => !v)}>
+              <IconPlus size={18} />
             </IconButton>
           )}
+
+          <AnimatePresence>
+            {showNewMenu && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setShowNewMenu(false)} />
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.14 }}
+                  className="absolute right-0 top-12 z-30 w-56 overflow-hidden rounded-ctrl bg-white py-1.5 shadow-lift"
+                >
+                  <NewMenuItem
+                    icon={<IconSearch size={18} />}
+                    label={lang === 'ru' ? 'Новый чат' : 'New chat'}
+                    onClick={() => {
+                      setShowNewMenu(false)
+                      setView('search')
+                    }}
+                  />
+                  <NewMenuItem
+                    icon={<IconUsers size={18} />}
+                    label={lang === 'ru' ? 'Новая группа' : 'New group'}
+                    onClick={() => {
+                      setShowNewMenu(false)
+                      setCreateKind('group')
+                    }}
+                  />
+                  <NewMenuItem
+                    icon={<IconChat size={18} />}
+                    label={lang === 'ru' ? 'Новый канал' : 'New channel'}
+                    onClick={() => {
+                      setShowNewMenu(false)
+                      setCreateKind('channel')
+                    }}
+                  />
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
       </div>
+
+      <AnimatePresence>
+        {createKind && <CreateGroupModal kind={createKind} onClose={() => setCreateKind(null)} />}
+      </AnimatePresence>
 
       {/* Search box */}
       <div className="mb-3 flex items-center gap-2 rounded-pill bg-grey-soft px-4 py-3">
@@ -531,6 +579,27 @@ function ChatCard({
         </div>
       )}
     </motion.div>
+  )
+}
+
+function NewMenuItem({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-body-l font-medium text-ink transition-colors hover:bg-black/5"
+    >
+      <span className="text-grey-mid">{icon}</span>
+      {label}
+    </button>
   )
 }
 

@@ -133,7 +133,7 @@ export async function isHandleTaken(handle: string): Promise<boolean> {
 
 export async function updateProfileInDb(
   id: string,
-  updates: Partial<Omit<SupabaseProfile, 'id' | 'phone'>>,
+  updates: Partial<Omit<SupabaseProfile, 'id'>>,
 ): Promise<boolean> {
   try {
     const client = getSupabaseClient()
@@ -334,6 +334,243 @@ export function subscribeToInbox(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${userId}` },
       (payload: any) => onInsert(payload.new as DbMessage),
+    )
+    .subscribe()
+  return () => {
+    try {
+      client.removeChannel(channel)
+    } catch {
+      /* noop */
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Groups & channels (Supabase) — see supabase-groups.sql
+// ─────────────────────────────────────────────────────────────
+
+export interface DbChat {
+  id: string
+  kind: string
+  name: string
+  color: string
+  about: string | null
+  owner_id: string
+  created_at: string
+}
+
+export async function insertChat(row: {
+  id: string
+  kind: string
+  name: string
+  color: string
+  about?: string | null
+  owner_id: string
+}): Promise<boolean> {
+  try {
+    const client = getSupabaseClient()
+    const { error } = await client.from('chats').insert([{ ...row, about: row.about ?? null }])
+    if (error) {
+      console.error('Error inserting chat:', error)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('Exception in insertChat:', err)
+    return false
+  }
+}
+
+export async function updateChatInDb(
+  id: string,
+  patch: Partial<Pick<DbChat, 'name' | 'color' | 'about'>>,
+): Promise<boolean> {
+  try {
+    const client = getSupabaseClient()
+    const { error } = await client.from('chats').update(patch).eq('id', id)
+    if (error) {
+      console.error('Error updating chat:', error)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('Exception in updateChatInDb:', err)
+    return false
+  }
+}
+
+export async function deleteChatInDb(id: string): Promise<boolean> {
+  try {
+    const client = getSupabaseClient()
+    const { error } = await client.from('chats').delete().eq('id', id)
+    if (error) {
+      console.error('Error deleting chat:', error)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('Exception in deleteChatInDb:', err)
+    return false
+  }
+}
+
+export async function addChatMembers(chatId: string, userIds: string[], ownerId?: string): Promise<boolean> {
+  if (!userIds.length) return true
+  try {
+    const client = getSupabaseClient()
+    const rows = userIds.map((uid) => ({
+      chat_id: chatId,
+      user_id: uid,
+      role: uid === ownerId ? 'owner' : 'member',
+    }))
+    const { error } = await client.from('chat_members').upsert(rows, { onConflict: 'chat_id,user_id' })
+    if (error) {
+      console.error('Error adding members:', error)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('Exception in addChatMembers:', err)
+    return false
+  }
+}
+
+export async function removeChatMembers(chatId: string, userIds: string[]): Promise<boolean> {
+  if (!userIds.length) return true
+  try {
+    const client = getSupabaseClient()
+    const { error } = await client
+      .from('chat_members')
+      .delete()
+      .eq('chat_id', chatId)
+      .in('user_id', userIds)
+    if (error) {
+      console.error('Error removing members:', error)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('Exception in removeChatMembers:', err)
+    return false
+  }
+}
+
+export async function fetchChatMembers(chatId: string): Promise<string[]> {
+  try {
+    const client = getSupabaseClient()
+    const { data, error } = await client.from('chat_members').select('user_id').eq('chat_id', chatId)
+    if (error) {
+      console.error('Error fetching members:', error)
+      return []
+    }
+    return (data as { user_id: string }[]).map((r) => r.user_id)
+  } catch (err) {
+    console.error('Exception in fetchChatMembers:', err)
+    return []
+  }
+}
+
+// All groups/channels the user belongs to, each with its member list.
+export async function fetchMyChats(userId: string): Promise<{ chat: DbChat; members: string[] }[]> {
+  try {
+    const client = getSupabaseClient()
+    const { data: mem, error: memErr } = await client
+      .from('chat_members')
+      .select('chat_id')
+      .eq('user_id', userId)
+    if (memErr) {
+      console.error('Error fetching my memberships:', memErr)
+      return []
+    }
+    const ids = Array.from(new Set((mem as { chat_id: string }[]).map((r) => r.chat_id)))
+    if (!ids.length) return []
+    const { data: chatsData, error: chatsErr } = await client.from('chats').select('*').in('id', ids)
+    if (chatsErr) {
+      console.error('Error fetching my chats:', chatsErr)
+      return []
+    }
+    const { data: allMem } = await client.from('chat_members').select('chat_id, user_id').in('chat_id', ids)
+    const byChat: Record<string, string[]> = {}
+    for (const r of (allMem as { chat_id: string; user_id: string }[]) || []) {
+      ;(byChat[r.chat_id] ||= []).push(r.user_id)
+    }
+    return (chatsData as DbChat[]).map((chat) => ({ chat, members: byChat[chat.id] ?? [userId] }))
+  } catch (err) {
+    console.error('Exception in fetchMyChats:', err)
+    return []
+  }
+}
+
+export async function fetchChatById(id: string): Promise<DbChat | null> {
+  try {
+    const client = getSupabaseClient()
+    const { data, error } = await client.from('chats').select('*').eq('id', id).maybeSingle()
+    if (error) {
+      console.error('Error fetching chat by id:', error)
+      return null
+    }
+    return data as DbChat | null
+  } catch (err) {
+    console.error('Exception in fetchChatById:', err)
+    return null
+  }
+}
+
+// Watch which groups/channels I'm added to or removed from (across all clients).
+export function subscribeToMyMemberships(
+  userId: string,
+  onAdded: (chatId: string) => void,
+  onRemoved: (chatId: string) => void,
+): () => void {
+  const client = getSupabaseClient()
+  if (!client.channel) return () => {}
+  const channel = client
+    .channel(`memberships:${userId}`)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'chat_members', filter: `user_id=eq.${userId}` },
+      (payload: any) => onAdded(payload.new.chat_id),
+    )
+    .on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'chat_members', filter: `user_id=eq.${userId}` },
+      (payload: any) => onRemoved(payload.old?.chat_id),
+    )
+    .subscribe()
+  return () => {
+    try {
+      client.removeChannel(channel)
+    } catch {
+      /* noop */
+    }
+  }
+}
+
+// One channel per group carrying its messages, metadata edits, and roster changes.
+export function subscribeToGroup(
+  chatId: string,
+  onMessage: (evt: 'INSERT' | 'UPDATE', row: DbMessage) => void,
+  onMeta: (row: DbChat) => void,
+  onRoster: () => void,
+): () => void {
+  const client = getSupabaseClient()
+  if (!client.channel) return () => {}
+  const channel = client
+    .channel(`group:${chatId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'messages', filter: `chat_id=eq.${chatId}` },
+      (payload: any) => onMessage(payload.eventType, payload.new as DbMessage),
+    )
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'chats', filter: `id=eq.${chatId}` },
+      (payload: any) => onMeta(payload.new as DbChat),
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'chat_members', filter: `chat_id=eq.${chatId}` },
+      () => onRoster(),
     )
     .subscribe()
   return () => {

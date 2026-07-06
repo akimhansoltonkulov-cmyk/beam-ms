@@ -26,6 +26,24 @@ npm run build    # type-check + production bundle
 
 Login: enter any phone number, then any 4-digit code.
 
+## Supabase setup (required for real multi-user features)
+
+Real-time messaging, contacts, presence, **groups & channels**, and calls are backed by
+Supabase. Before deploying (e.g. to Vercel), run these SQL scripts once in
+**Supabase → SQL Editor**, in order:
+
+1. `supabase-messages.sql` — messages table + realtime
+2. `supabase-messages-v2.sql` — attachments/reactions columns + media storage bucket
+3. `supabase-groups.sql` — **groups & channels** (`chats` + `chat_members`) + realtime
+
+You also need a `profiles` table (id, phone, name, handle, avatar, color, bio, language).
+The client URL/key live in `src/lib/supabase.ts`. Real-time features work between
+registered users (ids prefixed `u-`); the seed demo contacts remain local-only.
+
+Groups and channels created in the app are stored in `chats`/`chat_members` and pushed
+to every member's device over Supabase Realtime — create on one device, and members see
+it (and its messages, edits, and roster changes) live on another.
+
 ## What's implemented
 
 **Engine feel** — optimistic send, sub-200 ms delivery ticks, cold-start warm-up,

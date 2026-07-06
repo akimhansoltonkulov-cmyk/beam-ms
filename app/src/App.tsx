@@ -7,11 +7,13 @@ import ChatWindow from './screens/ChatWindow'
 import FloatingDock from './screens/FloatingDock'
 import SettingsPanel from './screens/SettingsPanel'
 import ProfilePanel from './screens/ProfilePanel'
+import CallOverlay from './screens/CallOverlay'
 
 export default function App() {
   const authed = useStore((s) => s.authed)
   const activeChatId = useStore((s) => s.activeChatId)
   const view = useStore((s) => s.view)
+  const call = useStore((s) => s.call)
   const openChat = useStore((s) => s.openChat)
   const setView = useStore((s) => s.setView)
 
@@ -73,6 +75,9 @@ export default function App() {
 
             {/* Floating glass dock (hidden inside a chat) */}
             {!activeChatId && <FloatingDock />}
+
+            {/* Call surface — overlays everything while ringing / in a call */}
+            <AnimatePresence>{call && <CallOverlay />}</AnimatePresence>
           </>
         )}
       </div>

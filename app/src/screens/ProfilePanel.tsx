@@ -16,6 +16,7 @@ export default function ProfilePanel() {
   const [name, setName] = useState(me.name)
   const [handle, setHandle] = useState(me.handle)
   const [bio, setBio] = useState(me.bio || '')
+  const [phone, setPhone] = useState(me.phone || '')
   const [avatar, setAvatar] = useState(me.avatar || '')
   const [color, setColor] = useState(me.color || '#E1FF00')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -23,8 +24,8 @@ export default function ProfilePanel() {
   const sent = messages.filter((m) => m.authorId === 'me').length
 
   const roadmapItems = currentLang === 'ru'
-    ? ['Секретные чаты (E2EE)', 'Аудио/Видео звонки', 'Папки', 'Каналы', 'Стикеры']
-    : ['Secret Chats (E2EE)', 'Audio/Video calls', 'Folders', 'Channels', 'Stickers']
+    ? ['Секретные чаты (E2EE)', 'Папки', 'Каналы', 'Стикеры']
+    : ['Secret Chats (E2EE)', 'Folders', 'Channels', 'Stickers']
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -38,7 +39,7 @@ export default function ProfilePanel() {
 
   const handleSave = async () => {
     if (!name.trim() || !handle.trim()) return
-    const success = await updateProfile({ name, handle, bio, avatar, color })
+    const success = await updateProfile({ name, handle, bio, avatar, color, phone })
     if (success) {
       setEditing(false)
     } else {
@@ -65,6 +66,7 @@ export default function ProfilePanel() {
                 setName(me.name)
                 setHandle(me.handle)
                 setBio(me.bio || '')
+                setPhone(me.phone || '')
                 setAvatar(me.avatar || '')
                 setColor(me.color || '#E1FF00')
               }}
@@ -131,6 +133,16 @@ export default function ProfilePanel() {
               </div>
             </div>
             <div>
+              <label className="mb-1 block text-body-s font-semibold text-grey-mid">{currentLang === 'ru' ? 'Телефон' : 'Phone'}</label>
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                inputMode="tel"
+                placeholder="+996 555 000 123"
+                className="w-full rounded-ctrl bg-grey-soft px-4 py-3 text-body-l font-medium text-ink outline-none"
+              />
+            </div>
+            <div>
               <label className="mb-1 block text-body-s font-semibold text-grey-mid">{currentLang === 'ru' ? 'О себе' : 'Bio'}</label>
               <textarea
                 value={bio}
@@ -151,6 +163,7 @@ export default function ProfilePanel() {
               <div>
                 <h2 className="text-display leading-none">{me.name}</h2>
                 <p className="mt-1.5 text-body-l text-white/60">{me.handle}</p>
+                {me.phone && <p className="mt-0.5 text-body-s text-white/40">{me.phone}</p>}
               </div>
             </div>
             {me.bio && <p className="relative mt-5 text-body-l text-white/80 leading-relaxed">{me.bio}</p>}

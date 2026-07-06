@@ -2,25 +2,61 @@ import { create } from 'zustand'
 import type { Attachment, Chat, Message, Packet, User, ViewId } from './types'
 import { ME, cannedReplies, chats as seedChats, messages as seedMessages, users as seedUsers } from './lib/seed'
 import {
+  addChatMembers,
+  deleteChatInDb,
   dmChatId,
+  fetchChatById,
+  fetchChatMembers,
   fetchMessages,
+  fetchMyChats,
   getProfileByHandle,
   getProfileById,
   getProfileByPhone,
+  insertChat,
   insertMessage,
   joinPresence,
   patchMessage,
   registerProfile,
+  removeChatMembers,
   searchProfiles,
   subscribeToChat,
+  subscribeToGroup,
   subscribeToInbox,
+  subscribeToMyMemberships,
+  updateChatInDb,
   updateProfileInDb,
+  type DbChat,
   type DbMessage,
   type SupabaseProfile,
 } from './lib/supabase'
+import {
+  acceptCall as rtcAccept,
+  declineCall as rtcDecline,
+  endCall as rtcEnd,
+  initCallSignaling,
+  startCall as rtcStart,
+  teardownCallSignaling,
+  toggleCamera as rtcToggleCamera,
+  toggleMute as rtcToggleMute,
+  type EndReason,
+} from './lib/webrtc'
 
-// A chat is backed by real Supabase Realtime when its id is a canonical DM id.
-const isRealChatId = (id: string) => id.startsWith('dm:')
+// A chat is backed by real Supabase Realtime when its id is a canonical DM id
+// or a persisted group/channel id (g-… / ch-…). Seed chats use the c-… prefix.
+const isRealChatId = (id: string) =>
+  id.startsWith('dm:') || id.startsWith('g-') || id.startsWith('ch-')
+
+const dbToChat = (c: DbChat, members: string[]): Chat => ({
+  id: c.id,
+  kind: (c.kind as Chat['kind']) === 'channel' ? 'channel' : 'group',
+  name: c.name,
+  avatar: '',
+  color: c.color || '#E1FF00',
+  members,
+  about: c.about || undefined,
+  ownerId: c.owner_id,
+  via: c.kind === 'channel' ? 'Beam Channel' : 'Beam Group',
+})
 
 const dbToMessage = (row: DbMessage): Message => ({
   id: row.id,
@@ -40,6 +76,8 @@ const dbToMessage = (row: DbMessage): Message => ({
 let chatUnsub: (() => void) | null = null
 let inboxUnsub: (() => void) | null = null
 let presenceUnsub: (() => void) | null = null
+let membershipUnsub: (() => void) | null = null
+const groupSubs: Record<string, () => void> = {}
 
 // Map a Supabase profile row to a local User
 const profileToUser = (p: SupabaseProfile): User => ({
@@ -50,6 +88,7 @@ const profileToUser = (p: SupabaseProfile): User => ({
   color: p.color || '#E1FF00',
   bio: p.bio || 'Independent Beam user',
   language: p.language || 'en',
+  phone: p.phone,
 })
 
 let idc = 1000
@@ -62,6 +101,22 @@ interface Prefs {
   selfDestructMonths: 0 | 1 | 3 | 6
   webPush: boolean
   soundOn: boolean
+}
+
+export type CallStatus = 'idle' | 'outgoing' | 'incoming' | 'active'
+
+export interface CallState {
+  status: CallStatus
+  peerId: string
+  peerName: string
+  peerColor: string
+  chatId: string
+  video: boolean
+  muted: boolean
+  cameraOff: boolean
+  startedAt?: number
+  localStream: MediaStream | null
+  remoteStream: MediaStream | null
 }
 
 interface State {
@@ -85,6 +140,9 @@ interface State {
   packets: Packet[]
   connected: boolean
 
+  // calls
+  call: CallState | null
+
   prefs: Prefs
 
   // auth
@@ -97,6 +155,7 @@ interface State {
     bio: string
     avatar?: string
     color?: string
+    phone?: string
   }) => Promise<boolean>
 
   // navigation
@@ -120,6 +179,24 @@ interface State {
   archiveChat: (chatId: string) => void
   deleteChat: (chatId: string) => void
 
+  // groups & channels
+  createGroupChat: (
+    kind: 'group' | 'channel',
+    name: string,
+    memberIds: string[],
+    opts?: { about?: string; color?: string },
+  ) => string
+  updateChat: (chatId: string, patch: Partial<Pick<Chat, 'name' | 'about' | 'color' | 'members'>>) => void
+
+  // calls
+  startCall: (chatId: string, video: boolean) => Promise<void>
+  acceptCall: () => Promise<void>
+  declineCall: () => void
+  hangUp: () => void
+  toggleCallMute: () => void
+  toggleCallCamera: () => void
+  _endCallLocal: (reason: EndReason) => void
+
   // contacts
   addContact: (query: string) => Promise<{ success: boolean; error?: string; profile?: User }>
   searchUsers: (query: string) => Promise<User[]>
@@ -133,6 +210,9 @@ interface State {
   _log: (p: Omit<Packet, 'id' | 'ts'>) => void
   _upsertMessage: (m: Message) => void
   _startInbox: () => void
+  _startGroups: () => Promise<void>
+  _subscribeGroup: (chatId: string) => void
+  _upsertLocalChat: (chat: Chat) => void
 }
 
 const isRealUserId = (id?: string) => !!id && id.startsWith('u-')
@@ -159,6 +239,8 @@ export const useStore = create<State>((set, get) => ({
   packets: [],
   connected: true,
 
+  call: null,
+
   prefs: {
     darkComposer: false,
     metadataMinimizer: true,
@@ -182,6 +264,7 @@ export const useStore = create<State>((set, get) => ({
           color: profile.color || '#E1FF00',
           bio: profile.bio || 'Independent Beam user',
           language: profile.language || 'en',
+          phone: profile.phone,
         }
         // Add profile to local users seed dictionary so avatars render
         const updatedUsers = { ...get().users, [profile.id]: meUser }
@@ -224,6 +307,7 @@ export const useStore = create<State>((set, get) => ({
           color: newProfile.color,
           bio: newProfile.bio,
           language: newProfile.language,
+          phone: newProfile.phone,
         }
         const updatedUsers = { ...get().users, [newProfile.id]: meUser }
         set({ me: meUser, users: updatedUsers, authed: true, booting: false })
@@ -255,7 +339,14 @@ export const useStore = create<State>((set, get) => ({
       presenceUnsub()
       presenceUnsub = null
     }
-    set({ authed: false, activeChatId: null, view: 'chats' })
+    if (membershipUnsub) {
+      membershipUnsub()
+      membershipUnsub = null
+    }
+    Object.values(groupSubs).forEach((unsub) => unsub())
+    Object.keys(groupSubs).forEach((k) => delete groupSubs[k])
+    teardownCallSignaling()
+    set({ authed: false, activeChatId: null, view: 'chats', call: null })
   },
 
   updateProfile: async (updates) => {
@@ -263,13 +354,17 @@ export const useStore = create<State>((set, get) => ({
     if (!me) return false
     try {
       const cleanHandle = updates.handle.replace(/^@/, '')
-      const ok = await updateProfileInDb(me.id, {
+      const patch: Parameters<typeof updateProfileInDb>[1] = {
         name: updates.name,
         handle: cleanHandle,
         bio: updates.bio,
         avatar: updates.avatar,
         color: updates.color || me.color,
-      })
+      }
+      if (updates.phone !== undefined && updates.phone.trim() && updates.phone !== me.phone) {
+        patch.phone = updates.phone.trim()
+      }
+      const ok = await updateProfileInDb(me.id, patch)
       if (!ok) throw new Error('update failed')
 
       const updatedMe: User = {
@@ -279,13 +374,93 @@ export const useStore = create<State>((set, get) => ({
         bio: updates.bio,
         avatar: updates.avatar || '',
         color: updates.color || me.color,
+        phone: patch.phone ?? me.phone,
       }
-      set({ me: updatedMe })
+      set({ me: updatedMe, users: { ...get().users, [me.id]: updatedMe } })
       return true
     } catch (e) {
       console.error('Exception updating profile:', e)
       return false
     }
+  },
+
+  // ── Calls ──────────────────────────────────────────────────
+  startCall: async (chatId, video) => {
+    const chat = get().chats.find((c) => c.id === chatId)
+    const meId = get().me?.id
+    if (!chat || chat.kind !== 'dm') return
+    const peerId = chat.members.find((m) => m !== meId && m !== 'me')
+    const peer = peerId ? get().users[peerId] : undefined
+    if (!peerId || !peer) return
+    if (!isRealChatId(chatId) || !isRealUserId(meId) || !isRealUserId(peerId)) {
+      alert(get().me?.language === 'ru'
+        ? 'Звонки доступны только реальным пользователям Beam. Добавьте контакт по @нику.'
+        : 'Calls are only available with real Beam users. Add a contact by @handle first.')
+      return
+    }
+    set({
+      call: {
+        status: 'outgoing',
+        peerId,
+        peerName: peer.name,
+        peerColor: peer.color,
+        chatId,
+        video,
+        muted: false,
+        cameraOff: false,
+        localStream: null,
+        remoteStream: null,
+      },
+    })
+    get()._log({ dir: 'out', op: 'call.invite', bytes: 48, summary: `ring ${peer.name}`, encrypted: true })
+    try {
+      await rtcStart(peerId, get().me!.name, video, chatId)
+    } catch (e) {
+      console.error('startCall failed:', e)
+      set({ call: null })
+      alert(get().me?.language === 'ru'
+        ? 'Не удалось получить доступ к камере/микрофону.'
+        : 'Could not access camera / microphone.')
+    }
+  },
+
+  acceptCall: async () => {
+    const call = get().call
+    if (!call || call.status !== 'incoming') return
+    set({ call: { ...call, status: 'active', startedAt: Date.now() } })
+    get()._log({ dir: 'out', op: 'call.accept', bytes: 24, summary: `accept ${call.peerName}`, encrypted: true })
+    try {
+      await rtcAccept()
+    } catch (e) {
+      console.error('acceptCall failed:', e)
+      get()._endCallLocal('failed')
+    }
+  },
+
+  declineCall: () => {
+    get()._log({ dir: 'out', op: 'call.decline', bytes: 24, summary: 'declined', encrypted: true })
+    rtcDecline()
+    set({ call: null })
+  },
+
+  hangUp: () => {
+    get()._log({ dir: 'out', op: 'call.end', bytes: 24, summary: 'hangup', encrypted: true })
+    rtcEnd('local')
+    set({ call: null })
+  },
+
+  toggleCallMute: () => {
+    const muted = rtcToggleMute()
+    set((s) => (s.call ? { call: { ...s.call, muted } } : {}))
+  },
+
+  toggleCallCamera: () => {
+    const cameraOff = rtcToggleCamera()
+    set((s) => (s.call ? { call: { ...s.call, cameraOff } } : {}))
+  },
+
+  _endCallLocal: (_reason) => {
+    if (get().call) set({ call: null })
   },
 
   addContact: async (query: string) => {
@@ -376,10 +551,83 @@ export const useStore = create<State>((set, get) => ({
   },
 
   deleteChat: (chatId: string) => {
+    const chat = get().chats.find((c) => c.id === chatId)
     set((s) => ({
       chats: s.chats.filter((c) => c.id !== chatId),
       activeChatId: get().activeChatId === chatId ? null : get().activeChatId,
     }))
+    // Persisted group/channel → remove server-side (cascade drops memberships).
+    if (chat && isRealChatId(chatId) && chat.kind !== 'dm') {
+      if (groupSubs[chatId]) {
+        groupSubs[chatId]()
+        delete groupSubs[chatId]
+      }
+      deleteChatInDb(chatId)
+    }
+  },
+
+  createGroupChat: (kind, name, memberIds, opts) => {
+    const meId = get().me?.id || 'me'
+    const palette = ['#E1FF00', '#B9E36B', '#7FC8F8', '#F5A9C5', '#C9A7F0', '#FF3B30', '#34C759']
+    const color = opts?.color || palette[Math.floor(Math.random() * palette.length)]
+    const members = Array.from(new Set([meId, ...memberIds]))
+    const id = `${kind === 'channel' ? 'ch' : 'g'}-${uid('x')}`
+    const chat: Chat = {
+      id,
+      kind,
+      name: name.trim() || (kind === 'channel' ? 'New Channel' : 'New Group'),
+      avatar: '',
+      color,
+      members,
+      about: opts?.about?.trim() || undefined,
+      ownerId: meId,
+      via: kind === 'channel' ? 'Beam Channel' : 'Beam Group',
+    }
+    set((s) => ({ chats: [...s.chats, chat], view: 'chats' }))
+    get()._log({
+      dir: 'out',
+      op: kind === 'channel' ? 'channel.create' : 'group.create',
+      bytes: 40 + members.length * 8,
+      summary: `${chat.name} · ${members.length} ${kind === 'channel' ? 'subscribers' : 'members'}`,
+      encrypted: true,
+    })
+
+    // Persist to Supabase so members on other devices receive it.
+    if (isRealUserId(meId)) {
+      insertChat({ id, kind, name: chat.name, color, about: chat.about ?? null, owner_id: meId }).then((ok) => {
+        if (ok) {
+          addChatMembers(id, members.filter(isRealUserId), meId)
+          get()._subscribeGroup(id)
+        }
+      })
+    }
+    get().openChat(id)
+    return id
+  },
+
+  updateChat: (chatId, patch) => {
+    const prev = get().chats.find((c) => c.id === chatId)
+    set((s) => ({
+      chats: s.chats.map((c) => (c.id === chatId ? { ...c, ...patch } : c)),
+    }))
+    get()._log({ dir: 'out', op: 'chat.update', bytes: 32, summary: `edit ${chatId}`, encrypted: true })
+
+    if (!prev || !isRealChatId(chatId) || prev.kind === 'dm') return
+    // Persist metadata changes.
+    const metaPatch: Partial<Pick<DbChat, 'name' | 'color' | 'about'>> = {}
+    if (patch.name !== undefined) metaPatch.name = patch.name
+    if (patch.color !== undefined) metaPatch.color = patch.color
+    if (patch.about !== undefined) metaPatch.about = patch.about || null
+    if (Object.keys(metaPatch).length) updateChatInDb(chatId, metaPatch)
+    // Diff the roster and sync membership rows.
+    if (patch.members) {
+      const before = new Set(prev.members)
+      const after = new Set(patch.members)
+      const added = patch.members.filter((m) => !before.has(m) && isRealUserId(m))
+      const removed = prev.members.filter((m) => !after.has(m) && isRealUserId(m))
+      if (added.length) addChatMembers(chatId, added, prev.ownerId)
+      if (removed.length) removeChatMembers(chatId, removed)
+    }
   },
 
   setView: (v) => set({ view: v, transparencyOpen: v === 'transparency' ? true : get().transparencyOpen }),
@@ -440,9 +688,11 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({ messages: [...s.messages, msg], replyTo: null }))
     get()._log({ dir: 'out', op: 'msg.send', bytes: sizeOf(t, attachments), summary: `→ ${chatId} · optimistic`, encrypted: true })
 
-    // Real chat → persist to Supabase and let Realtime deliver to the peer.
+    // Real chat → persist to Supabase and let Realtime deliver to the peer(s).
     if (real) {
-      const other = chat!.members.find((m) => m !== meId)
+      // DMs carry a recipient (for the inbox channel); groups/channels are
+      // fanned out via their group subscription, so recipient stays null.
+      const other = chat!.kind === 'dm' ? chat!.members.find((m) => m !== meId) : null
       insertMessage({ id, chat_id: chatId, author_id: meId, recipient_id: other, text: t, reply_to_id: replyToId, attachments }).then(
         (ok) => {
           set((s) => ({ messages: s.messages.map((m) => (m.id === id ? { ...m, status: ok ? 'sent' : 'sending' } : m)) }))
@@ -562,6 +812,97 @@ export const useStore = create<State>((set, get) => ({
       return { messages: [...s.messages, m] }
     }),
 
+  _upsertLocalChat: (chat) =>
+    set((s) => {
+      const idx = s.chats.findIndex((c) => c.id === chat.id)
+      if (idx >= 0) {
+        const next = s.chats.slice()
+        next[idx] = { ...next[idx], ...chat }
+        return { chats: next }
+      }
+      return { chats: [...s.chats, chat] }
+    }),
+
+  _subscribeGroup: (chatId) => {
+    if (groupSubs[chatId]) return
+    groupSubs[chatId] = subscribeToGroup(
+      chatId,
+      async (_evt, row) => {
+        const msg = dbToMessage(row)
+        const meId = get().me?.id
+        const status: Message['status'] =
+          msg.authorId === meId ? msg.status : get().activeChatId === chatId ? 'read' : 'delivered'
+        get()._upsertMessage({ ...msg, status })
+        // Ensure the author renders with a name/avatar in group bubbles.
+        if (msg.authorId !== meId && !get().users[msg.authorId] && isRealUserId(msg.authorId)) {
+          const p = await getProfileById(msg.authorId)
+          if (p) set((s) => ({ users: { ...s.users, [p.id]: profileToUser(p) } }))
+        }
+      },
+      (meta) => {
+        const existing = get().chats.find((c) => c.id === meta.id)
+        get()._upsertLocalChat(dbToChat(meta, existing?.members ?? [get().me?.id || '']))
+      },
+      async () => {
+        const members = await fetchChatMembers(chatId)
+        const meId = get().me?.id
+        // If I was removed from the roster, drop the chat locally.
+        if (meId && !members.includes(meId)) {
+          if (groupSubs[chatId]) {
+            groupSubs[chatId]()
+            delete groupSubs[chatId]
+          }
+          set((s) => ({
+            chats: s.chats.filter((c) => c.id !== chatId),
+            activeChatId: s.activeChatId === chatId ? null : s.activeChatId,
+          }))
+          return
+        }
+        set((s) => ({ chats: s.chats.map((c) => (c.id === chatId ? { ...c, members } : c)) }))
+      },
+    )
+  },
+
+  _startGroups: async () => {
+    const meId = get().me?.id
+    if (!isRealUserId(meId)) return
+    // Hydrate all my groups/channels and keep them live.
+    const rows = await fetchMyChats(meId!)
+    rows.forEach(({ chat, members }) => get()._upsertLocalChat(dbToChat(chat, members)))
+    rows.forEach(({ chat }) => get()._subscribeGroup(chat.id))
+
+    if (membershipUnsub) {
+      membershipUnsub()
+      membershipUnsub = null
+    }
+    membershipUnsub = subscribeToMyMemberships(
+      meId!,
+      async (chatId) => {
+        // Added to a new group/channel on another client.
+        if (get().chats.some((c) => c.id === chatId)) {
+          get()._subscribeGroup(chatId)
+          return
+        }
+        const chat = await fetchChatById(chatId)
+        if (!chat) return
+        const members = await fetchChatMembers(chatId)
+        get()._upsertLocalChat(dbToChat(chat, members))
+        get()._subscribeGroup(chatId)
+        get()._log({ dir: 'in', op: 'group.join', bytes: 40, summary: `joined ${chat.name}`, encrypted: true })
+      },
+      (chatId) => {
+        if (groupSubs[chatId]) {
+          groupSubs[chatId]()
+          delete groupSubs[chatId]
+        }
+        set((s) => ({
+          chats: s.chats.filter((c) => c.id !== chatId),
+          activeChatId: s.activeChatId === chatId ? null : s.activeChatId,
+        }))
+      },
+    )
+  },
+
   _startInbox: () => {
     if (inboxUnsub) {
       inboxUnsub()
@@ -569,6 +910,36 @@ export const useStore = create<State>((set, get) => ({
     }
     const meId = get().me?.id
     if (!isRealUserId(meId)) return
+
+    // Groups & channels — hydrate memberships and keep them live
+    get()._startGroups()
+
+    // Calls — listen for incoming invites on the personal channel
+    initCallSignaling(meId!, {
+      onIncoming: (from, fromName, video, chatId) => {
+        const peer = get().users[from]
+        set({
+          call: {
+            status: 'incoming',
+            peerId: from,
+            peerName: peer?.name || fromName,
+            peerColor: peer?.color || '#E1FF00',
+            chatId,
+            video,
+            muted: false,
+            cameraOff: false,
+            localStream: null,
+            remoteStream: null,
+          },
+        })
+        get()._log({ dir: 'in', op: 'call.ring', bytes: 48, summary: `← ${fromName}`, encrypted: true })
+      },
+      onLocalStream: (stream) => set((s) => (s.call ? { call: { ...s.call, localStream: stream } } : {})),
+      onRemoteStream: (stream) => set((s) => (s.call ? { call: { ...s.call, remoteStream: stream } } : {})),
+      onConnected: () =>
+        set((s) => (s.call ? { call: { ...s.call, status: 'active', startedAt: s.call.startedAt ?? Date.now() } } : {})),
+      onEnded: (reason) => get()._endCallLocal(reason),
+    })
 
     // Presence — reflect who is online among real users
     if (presenceUnsub) {

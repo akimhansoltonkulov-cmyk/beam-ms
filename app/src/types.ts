@@ -10,6 +10,7 @@ export interface User {
   color: string
   bio?: string
   language?: string
+  phone?: string
 }
 
 export interface Attachment {
@@ -41,11 +42,13 @@ export interface Message {
 
 export interface Chat {
   id: string
-  kind: 'dm' | 'group'
+  kind: 'dm' | 'group' | 'channel'
   name: string
   avatar: string
   color: string
-  members: string[] // user ids
+  members: string[] // user ids (subscribers for channels)
+  about?: string // group/channel description
+  ownerId?: string // creator/admin — may edit the group/channel
   via?: string // e.g. "Via Beam" label shown on feed cards
   muted?: boolean
   pinned?: boolean

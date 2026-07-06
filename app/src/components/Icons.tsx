@@ -200,6 +200,38 @@ export const IconLogout = (p: P) => (
   </svg>
 )
 
+export const IconPhone = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M5 4h3l1.5 4.5-2 1.5a12 12 0 0 0 6 6l1.5-2 4.5 1.5V19a2 2 0 0 1-2 2A16 16 0 0 1 4 6a2 2 0 0 1 1-2Z" />
+  </svg>
+)
+export const IconVideo = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3" y="6" width="12" height="12" rx="2.5" />
+    <path d="m15 10 6-3v10l-6-3" />
+  </svg>
+)
+export const IconVideoOff = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M3 6h9a2 2 0 0 1 2 2v1m0 4v2a2 2 0 0 1-2 2H4a1 1 0 0 1-1-1V6Z" />
+    <path d="m15 10 6-3v10l-4-2" />
+    <path d="m3 3 18 18" />
+  </svg>
+)
+export const IconMicOff = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M9 5a3 3 0 0 1 6 0v5m-1.2 2.8A3 3 0 0 1 9 11v-1" />
+    <path d="M5 11a7 7 0 0 0 10 6M12 18v3" />
+    <path d="m3 3 18 18" />
+  </svg>
+)
+export const IconPhoneOff = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M10.7 5.1A16 16 0 0 1 21 15v0a2 2 0 0 1-2 2h-2.5l-1-3 2-1.5a11.9 11.9 0 0 0-2-2.2M6.5 8.5A16 16 0 0 0 4 6a2 2 0 0 1 1-2h3l1.4 4" />
+    <path d="m3 3 18 18" />
+  </svg>
+)
+
 export const IconUsers = (p: P) => (
   <svg {...base(p)}>
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />

@@ -5,6 +5,7 @@
       "name": "beam-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "app"],
+      "autoPort": true,
       "port": 5173
     }
   ]

@@ -202,6 +202,8 @@ function Row({
 }
 
 function SessionRow({ name, meta, current }: { name: string; meta: string; current?: boolean }) {
+  const [ended, setEnded] = useState(false)
+  if (ended) return null
   return (
     <div className="flex items-center justify-between gap-3 rounded-ctrl bg-grey-soft p-3.5">
       <div>
@@ -211,7 +213,10 @@ function SessionRow({ name, meta, current }: { name: string; meta: string; curre
       {current ? (
         <span className="rounded-pill bg-lime px-3 py-1 text-body-s font-bold text-black">Active</span>
       ) : (
-        <button className="rounded-pill border border-black/15 px-3 py-1 text-body-s font-bold text-ink hover:bg-black hover:text-white">
+        <button
+          onClick={() => setEnded(true)}
+          className="rounded-pill border border-black/15 px-3 py-1 text-body-s font-bold text-ink hover:bg-black hover:text-white"
+        >
           End
         </button>
       )}

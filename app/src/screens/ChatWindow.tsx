@@ -1,12 +1,24 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../store'
 import { Avatar, IconButton } from '../components/ui'
-import { IconBack, IconBolt, IconDots, IconPin, IconSearch } from '../components/Icons'
+import {
+  IconBack,
+  IconBolt,
+  IconClose,
+  IconDots,
+  IconPhone,
+  IconPin,
+  IconSearch,
+  IconTrash,
+  IconVideo,
+} from '../components/Icons'
 import { dayLabel } from '../lib/format'
 import type { Message } from '../types'
 import MessageBubble from './MessageBubble'
 import Composer from './Composer'
+import { EditChatModal } from './GroupModals'
+import { IconEdit } from '../components/Icons'
 import { useTranslation } from '../lib/i18n'
 
 export default function ChatWindow() {
@@ -18,15 +30,28 @@ export default function ChatWindow() {
   const users = useStore((s) => s.users)
   const online = useStore((s) => s.online)
   const openChat = useStore((s) => s.openChat)
+  const startCall = useStore((s) => s.startCall)
+  const togglePinChat = useStore((s) => s.togglePinChat)
+  const archiveChat = useStore((s) => s.archiveChat)
+  const deleteChat = useStore((s) => s.deleteChat)
 
   const chat = chats.find((c) => c.id === activeChatId)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [query, setQuery] = useState('')
 
-  const chatMessages = useMemo(
+  const allMessages = useMemo(
     () => messages.filter((m) => m.chatId === activeChatId).sort((a, b) => a.createdAt - b.createdAt),
     [messages, activeChatId],
   )
-  const pinned = useMemo(() => chatMessages.filter((m) => m.pinned && !m.deleted), [chatMessages])
+  const chatMessages = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!searchOpen || !q) return allMessages
+    return allMessages.filter((m) => m.text.toLowerCase().includes(q))
+  }, [allMessages, searchOpen, query])
+  const pinned = useMemo(() => allMessages.filter((m) => m.pinned && !m.deleted), [allMessages])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -59,11 +84,18 @@ export default function ChatWindow() {
             <IconBack size={22} />
           </button>
           <Avatar name={chat.name} color={chat.color} size={40} online={isOnline} />
-          <div className="ml-2 min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={() => chat.kind !== 'dm' && setEditOpen(true)}
+            disabled={chat.kind === 'dm'}
+            className="ml-2 min-w-0 flex-1 text-left"
+          >
             <h2 className="truncate text-subtitle text-black">{chat.name}</h2>
             <p className="truncate text-body-s text-grey-mid mt-0.5">
               {chat.typing ? (
                 <span className="font-semibold text-green-600">{t('typing')}</span>
+              ) : chat.kind === 'channel' ? (
+                currentLang === 'ru' ? `${chat.members.length} подписчиков` : `${chat.members.length} subscribers`
               ) : chat.kind === 'group' ? (
                 currentLang === 'ru' ? `${chat.members.length} участников` : `${chat.members.length} members`
               ) : isOnline ? (
@@ -72,18 +104,153 @@ export default function ChatWindow() {
                 t('last_seen')
               )}
             </p>
-          </div>
+          </button>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
-          <IconButton title={currentLang === 'ru' ? 'Поиск в чате' : 'Search in chat'} size={40}>
+        <div className="relative flex items-center gap-1 shrink-0">
+          {chat.kind === 'dm' && (
+            <>
+              <IconButton
+                title={currentLang === 'ru' ? 'Аудиозвонок' : 'Voice call'}
+                size={40}
+                onClick={() => startCall(chat.id, false)}
+              >
+                <IconPhone size={19} />
+              </IconButton>
+              <IconButton
+                title={currentLang === 'ru' ? 'Видеозвонок' : 'Video call'}
+                size={40}
+                onClick={() => startCall(chat.id, true)}
+              >
+                <IconVideo size={19} />
+              </IconButton>
+            </>
+          )}
+          <IconButton
+            title={currentLang === 'ru' ? 'Поиск в чате' : 'Search in chat'}
+            size={40}
+            active={searchOpen}
+            onClick={() => {
+              setMenuOpen(false)
+              setSearchOpen((v) => !v)
+              setQuery('')
+            }}
+          >
             <IconSearch size={19} />
           </IconButton>
-          <IconButton title={currentLang === 'ru' ? 'Ещё' : 'More'} size={40}>
+          <IconButton
+            title={currentLang === 'ru' ? 'Ещё' : 'More'}
+            size={40}
+            active={menuOpen}
+            onClick={() => setMenuOpen((v) => !v)}
+          >
             <IconDots size={19} />
           </IconButton>
+
+          <AnimatePresence>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.14 }}
+                  className="absolute right-0 top-12 z-30 w-52 overflow-hidden rounded-ctrl bg-white py-1.5 shadow-card"
+                >
+                  {chat.kind !== 'dm' && (
+                    <MenuItem
+                      onClick={() => {
+                        setMenuOpen(false)
+                        setEditOpen(true)
+                      }}
+                    >
+                      <IconEdit size={17} />
+                      {chat.kind === 'channel'
+                        ? currentLang === 'ru' ? 'Изменить канал' : 'Edit channel'
+                        : currentLang === 'ru' ? 'Изменить группу' : 'Edit group'}
+                    </MenuItem>
+                  )}
+                  <MenuItem
+                    onClick={() => {
+                      togglePinChat(chat.id)
+                      setMenuOpen(false)
+                    }}
+                  >
+                    <IconPin size={17} />
+                    {chat.pinned
+                      ? currentLang === 'ru' ? 'Открепить чат' : 'Unpin chat'
+                      : currentLang === 'ru' ? 'Закрепить чат' : 'Pin chat'}
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      archiveChat(chat.id)
+                      setMenuOpen(false)
+                      openChat(null)
+                    }}
+                  >
+                    <IconBolt size={17} />
+                    {currentLang === 'ru' ? 'В архив' : 'Archive chat'}
+                  </MenuItem>
+                  <MenuItem
+                    danger
+                    onClick={() => {
+                      if (
+                        confirm(
+                          currentLang === 'ru'
+                            ? 'Удалить этот чат и его сообщения?'
+                            : 'Delete this chat and its messages?',
+                        )
+                      ) {
+                        deleteChat(chat.id)
+                        setMenuOpen(false)
+                      }
+                    }}
+                  >
+                    <IconTrash size={17} />
+                    {currentLang === 'ru' ? 'Удалить чат' : 'Delete chat'}
+                  </MenuItem>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
       </div>
+
+      {/* Group / channel edit modal */}
+      <AnimatePresence>
+        {editOpen && <EditChatModal chatId={chat.id} onClose={() => setEditOpen(false)} />}
+      </AnimatePresence>
+
+      {/* In-chat search bar */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="glass flex items-center gap-2 border-b border-black/5 px-4 py-2.5"
+          >
+            <IconSearch size={17} className="shrink-0 text-grey-mid" />
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={currentLang === 'ru' ? 'Поиск сообщений…' : 'Search messages…'}
+              className="w-full bg-transparent text-body-s text-ink outline-none placeholder:text-grey-mid"
+            />
+            <button
+              onClick={() => {
+                setSearchOpen(false)
+                setQuery('')
+              }}
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-grey-mid hover:bg-black/5"
+            >
+              <IconClose size={16} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Pinned bar */}
       {pinned.length > 0 && (
@@ -116,7 +283,7 @@ export default function ChatWindow() {
                     key={m.id}
                     message={m}
                     grouped={!!grouped}
-                    isGroup={chat.kind === 'group'}
+                    isGroup={chat.kind !== 'dm'}
                   />
                 )
               })}
@@ -132,19 +299,39 @@ export default function ChatWindow() {
   )
 }
 
-function SecurityBanner({ kind }: { kind: 'dm' | 'group' }) {
+function MenuItem({
+  children,
+  onClick,
+  danger,
+}: {
+  children: React.ReactNode
+  onClick: () => void
+  danger?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-body-s font-medium transition-colors hover:bg-black/5 ${
+        danger ? 'text-[#FF3B30]' : 'text-ink'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function SecurityBanner({ kind }: { kind: 'dm' | 'group' | 'channel' }) {
   const { lang: currentLang } = useTranslation()
+  const scope = kind === 'dm' ? 'chat' : kind === 'channel' ? 'channel' : 'group'
+  const ruScope = kind === 'dm' ? 'этом чате' : kind === 'channel' ? 'этом канале' : 'этой группе'
   return (
     <div className="mx-auto mb-3 flex max-w-[420px] items-center gap-2 rounded-ctrl bg-lime/25 px-4 py-2.5 text-center">
       <IconBolt size={16} className="shrink-0 text-black" />
       <p className="text-body-s text-ink">
         {currentLang === 'ru'
-          ? (kind === 'dm'
-            ? 'Сообщения в этом чате проходят по бинарному каналу Beam. Метаданные не сохраняются.'
-            : 'Сообщения в этой группе проходят по бинарному каналу Beam. Метаданные не сохраняются.')
-          : (kind === 'dm'
-            ? 'Messages in this chat travel over Beam’s binary channel. No metadata is retained.'
-            : 'Messages in this group travel over Beam’s binary channel. No metadata is retained.')}
+          ? `Сообщения в ${ruScope} проходят по бинарному каналу Beam. Метаданные не сохраняются.`
+          : `Messages in this ${scope} travel over Beam’s binary channel. No metadata is retained.`}
       </p>
     </div>
   )
