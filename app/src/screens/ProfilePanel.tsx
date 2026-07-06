@@ -4,7 +4,8 @@ import { useStore } from '../store'
 import { Avatar } from '../components/ui'
 import { useTranslation } from '../lib/i18n'
 import { uploadMedia } from '../lib/supabase'
-import { IconChevronRight, IconClose, IconEdit, IconImage, IconSettings } from '../components/Icons'
+import { usePwaInstall } from '../lib/usePwaInstall'
+import { IconArrowUpRight, IconChevronRight, IconClose, IconDownload, IconEdit, IconImage, IconSettings } from '../components/Icons'
 
 type SheetField = 'phone' | 'handle' | 'bio'
 
@@ -292,6 +293,11 @@ export default function ProfilePanel() {
               ))}
             </div>
           </div>
+
+          {/* Install as app */}
+          <div className="mt-4">
+            <InstallButton ru={ru} />
+          </div>
         </>
       )}
 
@@ -309,6 +315,56 @@ export default function ProfilePanel() {
           />
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+// "Install as app" button — launches the PWA install / Add-to-Home-Screen flow.
+function InstallButton({ ru }: { ru: boolean }) {
+  const { installed, promptInstall } = usePwaInstall()
+  const [iosHint, setIosHint] = useState(false)
+
+  if (installed) {
+    return (
+      <div className="flex items-center justify-center gap-2 rounded-card bg-white/70 py-4 text-body-l font-semibold text-grey-mid">
+        {ru ? 'Приложение установлено ✓' : 'App installed ✓'}
+      </div>
+    )
+  }
+
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent)
+
+  const onClick = async () => {
+    if (isIos) {
+      setIosHint(true)
+      return
+    }
+    const res = await promptInstall()
+    if (res === 'unavailable') setIosHint(true)
+  }
+
+  return (
+    <div>
+      <button
+        onClick={onClick}
+        className="flex w-full items-center gap-4 rounded-card bg-black py-4 px-5 text-left text-white transition active:scale-[0.98]"
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn bg-lime text-black">
+          <IconDownload size={19} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-body-l font-semibold">{ru ? 'Установить приложение' : 'Install app'}</p>
+          <p className="text-body-s text-white/60">{ru ? 'Полный экран, без строки браузера' : 'Full screen, no browser bar'}</p>
+        </div>
+        <IconArrowUpRight size={18} className="shrink-0 text-white/60" />
+      </button>
+      {iosHint && (
+        <p className="mt-2 px-2 text-body-s text-grey-mid leading-snug">
+          {ru
+            ? 'Нажмите «Поделиться» → «На экран «Домой»», чтобы открыть Beam без адресной строки.'
+            : 'Tap Share → “Add to Home Screen” to run Beam without the address bar.'}
+        </p>
+      )}
     </div>
   )
 }
