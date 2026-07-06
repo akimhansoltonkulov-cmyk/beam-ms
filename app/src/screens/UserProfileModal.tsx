@@ -35,7 +35,7 @@ export default function UserProfileModal({ userId, onClose }: { userId: string; 
       className="app-wash absolute inset-0 z-[65] flex flex-col sm:rounded-[40px]"
     >
       {/* Header */}
-      <div className="glass flex items-center gap-2 border-b border-black/5 px-3 py-3">
+      <div className="glass beam-header-top flex items-center gap-2 border-b border-black/5 px-3 pb-3">
         <button
           onClick={onClose}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-black/5"

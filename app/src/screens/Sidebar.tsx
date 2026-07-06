@@ -151,7 +151,7 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="flex h-full flex-col px-4 pt-4 relative">
+    <div className="beam-safe-top flex h-full flex-col px-4 relative">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>

@@ -77,7 +77,7 @@ export default function ChatWindow() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="glass z-10 flex items-center justify-between border-b border-black/5 px-4 py-3">
+      <div className="glass beam-header-top z-10 flex items-center justify-between border-b border-black/5 px-4 pb-3">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             onClick={() => openChat(null)}

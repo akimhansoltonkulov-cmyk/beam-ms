@@ -50,7 +50,7 @@ export default function SettingsPanel() {
   }
 
   return (
-    <div className="beam-scroll flex h-full flex-col overflow-y-auto px-5 pb-40 pt-4">
+    <div className="beam-scroll beam-safe-top flex h-full flex-col overflow-y-auto px-5 pb-40">
       <h1 className="text-section text-black">{t('adjust_prefs')}</h1>
       <p className="mt-1 text-body-s text-grey-mid">{t('privacy_perf')}</p>
 

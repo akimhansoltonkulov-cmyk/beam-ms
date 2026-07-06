@@ -96,7 +96,7 @@ export default function ProfilePanel() {
   }
 
   return (
-    <div className="beam-scroll flex h-full flex-col overflow-y-auto px-5 pb-40 pt-4">
+    <div className="beam-scroll beam-safe-top flex h-full flex-col overflow-y-auto px-5 pb-40">
       <div className="flex items-center justify-between">
         <h1 className="text-section text-black">{t('profile')}</h1>
         {editing && (

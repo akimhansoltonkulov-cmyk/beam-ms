@@ -29,6 +29,15 @@ body {
   overflow: hidden;
 }
 
+/* Consistent top breathing room across sections, respecting the status-bar
+   safe area (notch / punch-hole). */
+.beam-safe-top {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 22px);
+}
+.beam-header-top {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
+}
+
 /* Hide scrollbars globally */
 .beam-scroll {
   scrollbar-width: none; /* Firefox */
