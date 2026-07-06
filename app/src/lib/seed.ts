@@ -131,7 +131,7 @@ export const messages: Message[] = [
   mk('c-anna', 'anna', 'Скриншоты сейчас пришлю 👇', mins(179)),
   mk('c-anna', 'anna', '', mins(178), {
     attachments: [
-      { id: 'a1', kind: 'image', name: 'console.png', url: 'linear-gradient(135deg,#E1FF00,#0a0a0a)' },
+      { id: 'a1', kind: 'image', name: 'console.png', url: 'linear-gradient(135deg,#FF5A1A,#0a0a0a)' },
     ],
   }),
   mk('c-anna', 'me', 'Выглядит потрясающе. Запускаем!', mins(20)),

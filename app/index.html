@@ -5,7 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="/beam.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
     <!-- Status bar shares the app's light background (blends like Telegram/WhatsApp) -->
-    <meta name="theme-color" content="#e9ebe4" />
+    <meta name="theme-color" content="#f4f4f5" />
     <meta name="description" content="Beam — an independent, next-generation messenger. Speed. Privacy. Transparency." />
 
     <!-- Standalone PWA — hides browser chrome when launched from the home screen -->
@@ -28,7 +28,9 @@
       // Re-assert the light status-bar color at runtime so Chrome versions that
       // honor dynamic theme-color update the installed-app status bar without a reinstall.
       (function () {
-        var COLOR = '#e9ebe4'
+        function color() {
+          return document.documentElement.classList.contains('dark') ? '#121316' : '#f4f4f5'
+        }
         function apply() {
           var m = document.querySelector('meta[name="theme-color"]')
           if (!m) {
@@ -36,9 +38,7 @@
             m.setAttribute('name', 'theme-color')
             document.head.appendChild(m)
           }
-          // toggle to force a change event, then set the real value
-          m.setAttribute('content', '#e9ebe5')
-          requestAnimationFrame(function () { m.setAttribute('content', COLOR) })
+          m.setAttribute('content', color())
         }
         apply()
         document.addEventListener('visibilitychange', function () {

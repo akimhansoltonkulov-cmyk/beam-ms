@@ -4,11 +4,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Beam brand palette (Design.pdf §1)
+        // Beam brand palette — accent orange, plum secondary, mono defaults.
         black: '#000000',
-        lime: '#E1FF00', // Accent Lime (Acid)
-        'lime-soft': '#EEFF7A',
-        'lime-tint': '#F4FFB0',
+        lime: '#FF5A1A', // Accent (orange) — token name kept for compatibility
+        'lime-soft': '#FF7A45',
+        'lime-tint': '#FFE1D5', // pale accent tint (own message bubble)
+        plum: '#35202E', // secondary brand color
         white: '#FFFFFF',
         'grey-soft': '#F2F2F2', // Soft Grey — secondary surfaces / inputs
         'grey-mid': '#8E8E93', // Medium Grey — secondary text / icons

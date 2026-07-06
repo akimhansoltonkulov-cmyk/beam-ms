@@ -5,7 +5,8 @@
 :root {
   color-scheme: light;
   --beam-black: #000000;
-  --beam-lime: #e1ff00;
+  --beam-lime: #ff5a1a; /* accent (orange) */
+  --beam-plum: #35202e; /* secondary */
 }
 
 * {
@@ -21,7 +22,7 @@ body,
 body {
   margin: 0;
   font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #e8eae4;
+  background: #f4f4f5;
   color: #0a0a0a;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -60,7 +61,7 @@ body {
     box-shadow:
       0 40px 100px -30px rgba(0, 0, 0, 0.45),
       0 0 0 1px rgba(0, 0, 0, 0.06);
-    background: #e9ebe4;
+    background: #f4f4f5;
   }
 }
 
@@ -74,26 +75,23 @@ body {
   background-size: 8px 8px;
 }
 
-/* subtle grain-free noise-free elegant gradient wash for app shell */
+/* Clean neutral wash for the app shell (white/near-white default). */
 .app-wash {
-  background:
-    radial-gradient(1200px 600px at 8% -10%, #eef3e6 0%, transparent 55%),
-    radial-gradient(1000px 700px at 100% 0%, #eae6f0 0%, transparent 50%),
-    linear-gradient(180deg, #e9ebe4 0%, #e6e8e1 100%);
+  background: linear-gradient(180deg, #f6f6f7 0%, #f1f1f2 100%);
 }
 
 /* ── Dark theme ─────────────────────────────────────────────────
    The app uses fixed utility classes, so dark mode remaps the common
    surface/text utilities under a root .dark class. */
 .dark body {
-  background: #0f1012;
+  background: #121316;
   color: #ececed;
 }
 .dark .app-wash {
-  background: #0f1012;
+  background: #121316;
 }
 .dark .glass {
-  background: #16171a;
+  background: #17181b;
 }
 .dark .glass-dark {
   background: #000000;
@@ -102,20 +100,20 @@ body {
 .dark .bg-white\/70,
 .dark .bg-white\/75,
 .dark .bg-white\/80 {
-  background-color: #1b1d21 !important;
+  background-color: #1e2024 !important;
 }
 .dark .bg-white\/10 {
   background-color: rgba(255, 255, 255, 0.06) !important;
 }
 .dark .hover\:bg-white:hover {
-  background-color: #232529 !important;
+  background-color: #262a2f !important;
 }
 .dark .bg-grey-soft {
-  background-color: #26282d !important;
+  background-color: #292b30 !important;
 }
 .dark .hover\:bg-\[\#E9E9E9\]:hover,
 .dark .hover\:bg-\[\#e6e6e6\]:hover {
-  background-color: #303237 !important;
+  background-color: #33363c !important;
 }
 .dark .text-black,
 .dark .text-ink {
@@ -129,7 +127,7 @@ body {
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 .dark .beam-frame {
-  background: #0f1012;
+  background: #121316;
 }
 
 @keyframes beam-spin {

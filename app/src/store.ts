@@ -51,7 +51,7 @@ const dbToChat = (c: DbChat, members: string[]): Chat => ({
   kind: (c.kind as Chat['kind']) === 'channel' ? 'channel' : 'group',
   name: c.name,
   avatar: '',
-  color: c.color || '#E1FF00',
+  color: c.color || '#FF5A1A',
   members,
   about: c.about || undefined,
   ownerId: c.owner_id,
@@ -84,8 +84,8 @@ const profileToUser = (p: SupabaseProfile): User => ({
   id: p.id,
   name: p.name,
   handle: `@${p.handle}`,
-  avatar: p.avatar || p.color || '#E1FF00',
-  color: p.color || '#E1FF00',
+  avatar: p.avatar || p.color || '#FF5A1A',
+  color: p.color || '#FF5A1A',
   bio: p.bio || 'Independent Beam user',
   language: p.language || 'en',
   phone: p.phone,
@@ -156,6 +156,8 @@ const readTheme = (): Theme => {
 const applyTheme = (thm: Theme) => {
   try {
     document.documentElement.classList.toggle('dark', thm === 'dark')
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (meta) meta.setAttribute('content', thm === 'dark' ? '#121316' : '#f4f4f5')
   } catch {
     /* noop */
   }
@@ -321,8 +323,8 @@ export const useStore = create<State>((set, get) => ({
           id: profile.id,
           name: profile.name,
           handle: `@${profile.handle}`,
-          avatar: profile.avatar || '#E1FF00',
-          color: profile.color || '#E1FF00',
+          avatar: profile.avatar || '#FF5A1A',
+          color: profile.color || '#FF5A1A',
           bio: profile.bio || 'Independent Beam user',
           language: profile.language || 'en',
           phone: profile.phone,
@@ -349,7 +351,7 @@ export const useStore = create<State>((set, get) => ({
   register: async (phone: string, name: string, handle: string, language: string) => {
     set({ booting: true })
     try {
-      const colors = ['#E1FF00', '#FF3B30', '#34C759', '#007AFF', '#AF52DE']
+      const colors = ['#FF5A1A', '#FF3B30', '#34C759', '#007AFF', '#AF52DE']
       const color = colors[Math.floor(Math.random() * colors.length)]
       const newProfile = await registerProfile({
         phone,
@@ -619,7 +621,7 @@ export const useStore = create<State>((set, get) => ({
           kind: 'dm',
           name: other?.name || 'User',
           avatar: '',
-          color: other?.color || '#E1FF00',
+          color: other?.color || '#FF5A1A',
           members: [meId, userId],
           via: 'Via Beam',
         }
@@ -628,7 +630,7 @@ export const useStore = create<State>((set, get) => ({
           kind: 'dm',
           name: other?.name || 'User',
           avatar: '',
-          color: other?.color || '#E1FF00',
+          color: other?.color || '#FF5A1A',
           members: ['me', userId],
           via: 'Via Beam',
         }
@@ -666,7 +668,7 @@ export const useStore = create<State>((set, get) => ({
 
   createGroupChat: (kind, name, memberIds, opts) => {
     const meId = get().me?.id || 'me'
-    const palette = ['#E1FF00', '#B9E36B', '#7FC8F8', '#F5A9C5', '#C9A7F0', '#FF3B30', '#34C759']
+    const palette = ['#FF5A1A', '#B9E36B', '#7FC8F8', '#F5A9C5', '#C9A7F0', '#FF3B30', '#34C759']
     const color = opts?.color || palette[Math.floor(Math.random() * palette.length)]
     const members = Array.from(new Set([meId, ...memberIds]))
     const id = `${kind === 'channel' ? 'ch' : 'g'}-${uid('x')}`
@@ -1021,7 +1023,7 @@ export const useStore = create<State>((set, get) => ({
             status: 'incoming',
             peerId: from,
             peerName: peer?.name || fromName,
-            peerColor: peer?.color || '#E1FF00',
+            peerColor: peer?.color || '#FF5A1A',
             chatId,
             video,
             muted: false,
@@ -1075,7 +1077,7 @@ export const useStore = create<State>((set, get) => ({
           kind: 'dm',
           name: author?.name || 'User',
           avatar: '',
-          color: author?.color || '#E1FF00',
+          color: author?.color || '#FF5A1A',
           members: [meId!, msg.authorId],
           via: 'Via Beam',
         }

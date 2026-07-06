@@ -22,7 +22,7 @@ export default function ProfilePanel() {
   const [bio, setBio] = useState(me.bio || '')
   const [phone, setPhone] = useState(me.phone || '')
   const [avatar, setAvatar] = useState(me.avatar || '')
-  const [color, setColor] = useState(me.color || '#E1FF00')
+  const [color, setColor] = useState(me.color || '#FF5A1A')
   const [photoUploading, setPhotoUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -109,7 +109,7 @@ export default function ProfilePanel() {
                 setBio(me.bio || '')
                 setPhone(me.phone || '')
                 setAvatar(me.avatar || '')
-                setColor(me.color || '#E1FF00')
+                setColor(me.color || '#FF5A1A')
               }}
               className="rounded-pill bg-grey-soft px-4 py-1.5 text-body-s font-bold text-ink hover:opacity-80 transition"
             >
@@ -167,7 +167,7 @@ export default function ProfilePanel() {
               </div>
             </div>
             <div className="flex gap-2.5">
-              {['#E1FF00', '#B9E36B', '#7FC8F8', '#F5A9C5', '#C9A7F0', '#000000'].map((c) => (
+              {['#FF5A1A', '#B9E36B', '#7FC8F8', '#F5A9C5', '#C9A7F0', '#000000'].map((c) => (
                 <button
                   key={c}
                   onClick={() => setColor(c)}

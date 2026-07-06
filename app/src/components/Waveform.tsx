@@ -103,7 +103,7 @@ export default function Waveform({
                 height: `${8 + h * 22}px`,
                 background: on
                   ? active
-                    ? '#E1FF00'
+                    ? '#FF5A1A'
                     : '#000'
                   : active
                     ? 'rgba(255,255,255,0.35)'

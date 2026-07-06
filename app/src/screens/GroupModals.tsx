@@ -5,7 +5,7 @@ import { Avatar } from '../components/ui'
 import { IconCheck, IconClose, IconTrash } from '../components/Icons'
 import { useTranslation } from '../lib/i18n'
 
-const PALETTE = ['#E1FF00', '#B9E36B', '#7FC8F8', '#F5A9C5', '#C9A7F0', '#FF3B30', '#34C759', '#000000']
+const PALETTE = ['#FF5A1A', '#B9E36B', '#7FC8F8', '#F5A9C5', '#C9A7F0', '#FF3B30', '#34C759', '#000000']
 
 function Backdrop({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
@@ -67,7 +67,7 @@ function MemberPicker({
                 style={{
                   borderColor: on ? '#000' : '#C4C4C6',
                   background: on ? '#000' : 'transparent',
-                  color: '#E1FF00',
+                  color: '#FF5A1A',
                 }}
               >
                 {on && <IconCheck size={14} />}

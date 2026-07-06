@@ -28,7 +28,7 @@ export function Avatar({
           style={{
             width: size,
             height: size,
-            boxShadow: ring ? '0 0 0 2px #E1FF00' : undefined,
+            boxShadow: ring ? '0 0 0 2px #FF5A1A' : undefined,
           }}
         />
       ) : (
@@ -38,9 +38,9 @@ export function Avatar({
             width: size,
             height: size,
             background: color,
-            color: dark ? '#E1FF00' : '#0a0a0a',
+            color: dark ? '#FF5A1A' : '#0a0a0a',
             fontSize: size * 0.36,
-            boxShadow: ring ? '0 0 0 2px #E1FF00' : undefined,
+            boxShadow: ring ? '0 0 0 2px #FF5A1A' : undefined,
           }}
         >
           {initials(name)}
@@ -93,7 +93,7 @@ export function Toggle({
         className="absolute top-1 h-6 w-6 rounded-full transition-all duration-200"
         style={{
           left: on ? 30 : 4,
-          background: on ? '#E1FF00' : '#fff',
+          background: on ? '#FF5A1A' : '#fff',
           boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
         }}
       />
