@@ -98,8 +98,8 @@ function BootSplash() {
   return (
     <div className="app-wash flex h-full w-full flex-col items-center justify-center gap-5">
       <div className="relative flex h-20 w-20 items-center justify-center rounded-[26px] bg-black shadow-lift">
-        <span className="text-4xl font-extrabold text-white">B</span>
-        <span className="absolute inset-0 animate-pulse-ring rounded-[26px] border border-black/40" />
+        <span className="text-4xl font-extrabold text-lime">B</span>
+        <span className="absolute inset-0 animate-pulse-ring rounded-[26px] border border-lime/40" />
       </div>
       <span className="beam-spin inline-block h-5 w-5 rounded-full border-2 border-black/30 border-t-transparent" />
     </div>

@@ -110,7 +110,7 @@ export default function CallOverlay() {
         ) : (
           <>
             <CallBtn
-              color={call.muted ? '#FFFFFF' : 'rgba(255,255,255,0.15)'}
+              color={call.muted ? '#E1FF00' : 'rgba(255,255,255,0.15)'}
               dark={call.muted}
               onClick={toggleMute}
               label={call.muted ? (ru ? 'Вкл. микрофон' : 'Unmute') : (ru ? 'Выкл. микрофон' : 'Mute')}
@@ -120,7 +120,7 @@ export default function CallOverlay() {
 
             {call.video && (
               <CallBtn
-                color={call.cameraOff ? '#FFFFFF' : 'rgba(255,255,255,0.15)'}
+                color={call.cameraOff ? '#E1FF00' : 'rgba(255,255,255,0.15)'}
                 dark={call.cameraOff}
                 onClick={toggleCamera}
                 label={call.cameraOff ? (ru ? 'Вкл. камеру' : 'Camera on') : (ru ? 'Выкл. камеру' : 'Camera off')}

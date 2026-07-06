@@ -136,7 +136,7 @@ export default function MessageBubble({
               showActions ? 'z-50' : 'z-10'
             } ${
               mine
-                ? 'rounded-card rounded-br-lg bg-grey-soft text-ink'
+                ? 'rounded-card rounded-br-lg bg-lime-tint text-ink'
                 : 'rounded-card rounded-bl-lg bg-white text-ink'
             }`}
           >
@@ -293,7 +293,7 @@ export default function MessageBubble({
                 key={emoji}
                 onClick={() => react(message.id, emoji)}
                 className={`flex items-center gap-1 rounded-pill px-2 py-0.5 text-body-s font-semibold ${
-                  ids.includes('me') || (meId && ids.includes(meId)) ? 'bg-black text-white' : 'bg-white text-ink'
+                  ids.includes('me') || (meId && ids.includes(meId)) ? 'bg-lime text-black' : 'bg-white text-ink'
                 }`}
               >
                 <span>{emoji}</span>
@@ -320,7 +320,7 @@ function ActionBtn({
     <button
       title={title}
       onClick={onClick}
-      className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow-card transition hover:bg-black"
+      className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow-card transition hover:bg-lime"
     >
       {children}
     </button>
@@ -331,7 +331,7 @@ function StatusTick({ status }: { status: Message['status'] }) {
   if (status === 'sending') return <IconClock size={13} />
   if (status === 'sent') return <IconCheck size={13} />
   if (status === 'delivered') return <IconChecks size={16} />
-  return <IconChecks size={16} className="text-ink" />
+  return <IconChecks size={16} className="text-green-500" />
 }
 
 function AttachmentView({ att, mine }: { att: Attachment; mine: boolean }) {
@@ -355,15 +355,15 @@ function AttachmentView({ att, mine }: { att: Attachment; mine: boolean }) {
   return (
     <div
       className={`mb-1 flex items-center gap-3 rounded-ctrl p-2.5 ${
-        mine ? 'bg-black/[0.04]' : 'bg-grey-soft'
+        mine ? 'bg-white/10' : 'bg-grey-soft'
       }`}
     >
-      <div className="flex h-11 w-11 items-center justify-center rounded-btn bg-black text-white">
+      <div className="flex h-11 w-11 items-center justify-center rounded-btn bg-lime text-black">
         <IconFile size={20} />
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-body-l font-semibold">{att.name}</p>
-        <p className="text-body-s text-grey-mid">{bytes(att.size)}</p>
+        <p className={`text-body-s ${mine ? 'text-white/60' : 'text-grey-mid'}`}>{bytes(att.size)}</p>
       </div>
       <a
         href={att.url || undefined}
@@ -371,7 +371,7 @@ function AttachmentView({ att, mine }: { att: Attachment; mine: boolean }) {
         target="_blank"
         rel="noreferrer"
         className={`flex h-9 w-9 items-center justify-center rounded-full ${
-          mine ? 'bg-black text-white' : 'bg-black text-white'
+          mine ? 'bg-lime text-black' : 'bg-black text-lime'
         } ${!att.url ? 'pointer-events-none opacity-50' : ''}`}
       >
         <IconDownload size={17} />

@@ -192,7 +192,7 @@ export default function Login() {
                 <button
                   disabled={!phoneValid}
                   onClick={() => setStep('code')}
-                  className="focus-lime mt-4 flex w-full items-center justify-center gap-2 rounded-btn bg-black py-4 text-btn text-white transition disabled:opacity-40"
+                  className="focus-lime mt-4 flex w-full items-center justify-center gap-2 rounded-btn bg-black py-4 text-btn text-lime transition disabled:opacity-40"
                 >
                   {t('continue')}
                 </button>
@@ -227,7 +227,7 @@ export default function Login() {
                         if (e.key === 'Backspace' && !code[i] && i > 0) codeRefs.current[i - 1]?.focus()
                         if (e.key === 'Enter' && codeValid) handleVerify()
                       }}
-                      className="focus-lime h-16 w-full rounded-ctrl bg-grey-soft text-center text-2xl font-bold text-ink outline-none focus:bg-grey-soft"
+                      className="focus-lime h-16 w-full rounded-ctrl bg-grey-soft text-center text-2xl font-bold text-ink outline-none focus:bg-lime-tint"
                     />
                   ))}
                 </div>
@@ -235,11 +235,11 @@ export default function Login() {
                 <button
                   disabled={!codeValid || booting}
                   onClick={handleVerify}
-                  className="focus-lime mt-4 flex w-full items-center justify-center gap-2 rounded-btn bg-black py-4 text-btn text-white transition disabled:opacity-40"
+                  className="focus-lime mt-4 flex w-full items-center justify-center gap-2 rounded-btn bg-black py-4 text-btn text-lime transition disabled:opacity-40"
                 >
                   {booting ? (
                     <>
-                      <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-black border-t-transparent" />
+                      <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-lime border-t-transparent" />
                       {t('checking_reg')}
                     </>
                   ) : (
@@ -283,11 +283,11 @@ export default function Login() {
                 <button
                   disabled={!name.trim() || !handle.trim() || booting}
                   onClick={handleRegister}
-                  className="focus-lime mt-4 flex w-full items-center justify-center gap-2 rounded-btn bg-black py-4 text-btn text-white transition disabled:opacity-40"
+                  className="focus-lime mt-4 flex w-full items-center justify-center gap-2 rounded-btn bg-black py-4 text-btn text-lime transition disabled:opacity-40"
                 >
                   {booting ? (
                     <>
-                      <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-black border-t-transparent" />
+                      <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-lime border-t-transparent" />
                       {t('creating_acc')}
                     </>
                   ) : (
@@ -321,8 +321,8 @@ export default function Login() {
 function BeamMark() {
   return (
     <div className="relative flex h-20 w-20 items-center justify-center rounded-[26px] bg-black shadow-lift">
-      <span className="text-4xl font-extrabold text-white">B</span>
-      <span className="absolute inset-0 animate-pulse-ring rounded-[26px] border border-black/40" />
+      <span className="text-4xl font-extrabold text-lime">B</span>
+      <span className="absolute inset-0 animate-pulse-ring rounded-[26px] border border-lime/40" />
     </div>
   )
 }

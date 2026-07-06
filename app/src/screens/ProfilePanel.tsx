@@ -117,7 +117,7 @@ export default function ProfilePanel() {
             </button>
             <button
               onClick={handleSave}
-              className="rounded-pill bg-black px-4 py-1.5 text-body-s font-bold text-white hover:opacity-90 transition"
+              className="rounded-pill bg-black px-4 py-1.5 text-body-s font-bold text-lime hover:opacity-90 transition"
             >
               {t('save')}
             </button>
@@ -231,12 +231,12 @@ export default function ProfilePanel() {
               <Avatar name={me.name} color={me.color} url={me.avatar} size={96} ring />
               {photoUploading && (
                 <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45">
-                  <span className="beam-spin inline-block h-6 w-6 rounded-full border-2 border-black border-t-transparent" />
+                  <span className="beam-spin inline-block h-6 w-6 rounded-full border-2 border-lime border-t-transparent" />
                 </span>
               )}
             </button>
             <h2 className="mt-4 text-display leading-none text-black">{me.name}</h2>
-            <p className="mt-2 text-body-s font-semibold text-ink">{ru ? 'в сети' : 'online'}</p>
+            <p className="mt-2 text-body-s font-semibold text-green-600">{ru ? 'в сети' : 'online'}</p>
           </div>
 
           {/* Action buttons row (Telegram) */}
@@ -349,7 +349,7 @@ function InstallButton({ ru }: { ru: boolean }) {
         onClick={onClick}
         className="flex w-full items-center gap-4 rounded-card bg-black py-4 px-5 text-left text-white transition active:scale-[0.98]"
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn bg-black text-white">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn bg-lime text-black">
           <IconDownload size={19} />
         </span>
         <div className="min-w-0 flex-1">
@@ -479,10 +479,10 @@ function FieldSheet({
         <button
           onClick={onSave}
           disabled={saving}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-pill bg-black py-3.5 text-btn text-white transition active:scale-[0.98] disabled:opacity-50"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-pill bg-black py-3.5 text-btn text-lime transition active:scale-[0.98] disabled:opacity-50"
         >
           {saving ? (
-            <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-black border-t-transparent" />
+            <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-lime border-t-transparent" />
           ) : (
             ru ? 'Сохранить' : 'Save'
           )}

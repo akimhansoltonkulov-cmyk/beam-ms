@@ -101,7 +101,7 @@ export default function ChatWindow() {
             <h2 className="truncate text-subtitle text-black">{chat.name}</h2>
             <p className="truncate text-body-s text-grey-mid mt-0.5">
               {chat.typing ? (
-                <span className="font-semibold text-ink">{t('typing')}</span>
+                <span className="font-semibold text-green-600">{t('typing')}</span>
               ) : chat.kind === 'channel' ? (
                 currentLang === 'ru' ? `${chat.members.length} подписчиков` : `${chat.members.length} subscribers`
               ) : chat.kind === 'group' ? (
@@ -339,7 +339,7 @@ function SecurityBanner({ kind }: { kind: 'dm' | 'group' | 'channel' }) {
   const scope = kind === 'dm' ? 'chat' : kind === 'channel' ? 'channel' : 'group'
   const ruScope = kind === 'dm' ? 'этом чате' : kind === 'channel' ? 'этом канале' : 'этой группе'
   return (
-    <div className="mx-auto mb-3 flex max-w-[420px] items-center gap-2 rounded-ctrl bg-black/[0.05] px-4 py-2.5 text-center">
+    <div className="mx-auto mb-3 flex max-w-[420px] items-center gap-2 rounded-ctrl bg-lime/25 px-4 py-2.5 text-center">
       <IconBolt size={16} className="shrink-0 text-black" />
       <p className="text-body-s text-ink">
         {currentLang === 'ru'
@@ -378,7 +378,7 @@ function EmptyState() {
     <div className="relative flex h-full flex-col items-center justify-center overflow-hidden text-center">
       <div className="halftone pointer-events-none absolute inset-0 opacity-[0.05]" />
       <div className="relative flex h-24 w-24 items-center justify-center rounded-[30px] bg-black">
-        <span className="text-5xl font-extrabold text-white">B</span>
+        <span className="text-5xl font-extrabold text-lime">B</span>
       </div>
       <h2 className="mt-6 text-display text-black">{t('select_chat')}</h2>
       <p className="mt-2 max-w-[320px] text-body-s text-grey-mid">

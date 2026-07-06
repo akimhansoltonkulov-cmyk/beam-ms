@@ -21,8 +21,8 @@ body,
 body {
   margin: 0;
   font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #ffffff;
-  color: #000000;
+  background: #e8eae4;
+  color: #0a0a0a;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow: hidden;
@@ -38,15 +38,18 @@ body {
 }
 
 @layer components {
-  /* Flat paper surfaces — no frosted blur, hairline borders do the separation. */
   .glass {
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
   }
   .glass-dark {
-    background: #000000;
+    background: rgba(10, 10, 10, 0.62);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
   }
   .focus-lime:focus-visible {
-    outline: 1.5px solid #000000;
+    outline: 2px solid var(--beam-lime);
     outline-offset: 2px;
   }
 }
@@ -54,20 +57,29 @@ body {
 /* Mobile-only shell: on wide screens present as a centered device frame */
 @media (min-width: 640px) {
   .beam-frame {
-    box-shadow: 0 0 0 1px #e7e7e7;
-    background: #ffffff;
+    box-shadow:
+      0 40px 100px -30px rgba(0, 0, 0, 0.45),
+      0 0 0 1px rgba(0, 0, 0, 0.06);
+    background: #e9ebe4;
   }
 }
 
-/* Textures removed — flatness is the philosophy (kept as no-ops for existing markup). */
-.halftone,
+/* Halftone / dotted pattern used behind graphic elements (Design.pdf §5) */
+.halftone {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.28) 1px, transparent 1.4px);
+  background-size: 9px 9px;
+}
 .halftone-lime {
-  background-image: none;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.55) 1px, transparent 1.4px);
+  background-size: 8px 8px;
 }
 
-/* Plain paper canvas for the app shell. */
+/* subtle grain-free noise-free elegant gradient wash for app shell */
 .app-wash {
-  background: #ffffff;
+  background:
+    radial-gradient(1200px 600px at 8% -10%, #eef3e6 0%, transparent 55%),
+    radial-gradient(1000px 700px at 100% 0%, #eae6f0 0%, transparent 50%),
+    linear-gradient(180deg, #e9ebe4 0%, #e6e8e1 100%);
 }
 
 @keyframes beam-spin {

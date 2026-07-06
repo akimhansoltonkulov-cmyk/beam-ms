@@ -78,7 +78,7 @@ export default function Waveform({
       <button
         onClick={toggle}
         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-          active ? 'bg-black text-white' : 'bg-black text-white'
+          active ? 'bg-lime text-black' : 'bg-black text-lime'
         }`}
       >
         {playing ? (
@@ -103,10 +103,10 @@ export default function Waveform({
                 height: `${8 + h * 22}px`,
                 background: on
                   ? active
-                    ? '#000'
-                    : 'rgba(0,0,0,0.55)'
+                    ? '#E1FF00'
+                    : '#000'
                   : active
-                    ? 'rgba(0,0,0,0.45)'
+                    ? 'rgba(255,255,255,0.35)'
                     : 'rgba(0,0,0,0.2)',
               }}
             />

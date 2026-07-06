@@ -108,7 +108,7 @@ export default function Sidebar() {
         <div>
           <h1 className="text-section text-black">{searching ? t('contacts') : t('messages')}</h1>
           <p className="mt-0.5 flex items-center gap-1.5 text-body-s font-semibold text-grey-mid">
-            <span className="inline-block h-2 w-2 rounded-full bg-black" />
+            <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
             Binary link · {t('online')}
           </p>
         </div>
@@ -226,7 +226,7 @@ export default function Sidebar() {
                     alert(t('user_not_found'))
                   }
                 }}
-                className="flex-1 rounded-pill bg-black py-2.5 text-body-s font-bold text-white hover:opacity-90 transition"
+                className="flex-1 rounded-pill bg-black py-2.5 text-body-s font-bold text-lime hover:opacity-90 transition"
               >
                 {t('add')}
               </button>
@@ -436,7 +436,7 @@ function ChatCard({
           {mine && (
             <IconChecks
               size={16}
-              className={last?.status === 'read' ? 'text-white' : active ? 'text-white/50' : 'text-grey-mid'}
+              className={last?.status === 'read' ? 'text-lime' : active ? 'text-white/50' : 'text-grey-mid'}
             />
           )}
           <span
@@ -445,7 +445,7 @@ function ChatCard({
             }`}
           >
             {chat.typing ? (
-              <span className="font-semibold text-ink">{t('typing')}</span>
+              <span className="font-semibold text-green-500">{t('typing')}</span>
             ) : (
               <>
                 {chat.kind === 'group' && authorName && !mine ? `${authorName}: ` : ''}
@@ -456,7 +456,7 @@ function ChatCard({
         </div>
       </div>
       {unread > 0 && (
-        <span className="ml-1 mt-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-black px-1.5 text-body-s font-bold text-black">
+        <span className="ml-1 mt-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-lime px-1.5 text-body-s font-bold text-black">
           {unread}
         </span>
       )}
@@ -621,7 +621,7 @@ function highlight(text: string, q: string) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="rounded bg-black/[0.05] px-0.5 text-ink">{text.slice(idx, idx + q.length)}</mark>
+      <mark className="rounded bg-lime/60 px-0.5 text-ink">{text.slice(idx, idx + q.length)}</mark>
       {text.slice(idx + q.length)}
     </>
   )

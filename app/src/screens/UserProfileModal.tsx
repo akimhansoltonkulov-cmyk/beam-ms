@@ -50,7 +50,7 @@ export default function UserProfileModal({ userId, onClose }: { userId: string; 
         <div className="flex flex-col items-center text-center">
           <Avatar name={user.name} color={user.color} url={user.avatar} size={96} ring />
           <h2 className="mt-4 text-display leading-none text-black">{user.name}</h2>
-          <p className={`mt-2 text-body-s font-semibold ${online ? 'text-ink' : 'text-grey-mid'}`}>
+          <p className={`mt-2 text-body-s font-semibold ${online ? 'text-green-600' : 'text-grey-mid'}`}>
             {online ? (ru ? 'в сети' : 'online') : (ru ? 'был(а) недавно' : 'last seen recently')}
           </p>
         </div>
