@@ -1,8 +1,12 @@
 import { useState, useRef } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../store'
 import { Avatar } from '../components/ui'
 import { useTranslation } from '../lib/i18n'
-import { IconChevronRight, IconEdit, IconImage, IconSettings } from '../components/Icons'
+import { uploadMedia } from '../lib/supabase'
+import { IconChevronRight, IconClose, IconEdit, IconImage, IconSettings } from '../components/Icons'
+
+type SheetField = 'phone' | 'handle' | 'bio'
 
 export default function ProfilePanel() {
   const { t, lang: currentLang } = useTranslation()
@@ -18,30 +22,76 @@ export default function ProfilePanel() {
   const [phone, setPhone] = useState(me.phone || '')
   const [avatar, setAvatar] = useState(me.avatar || '')
   const [color, setColor] = useState(me.color || '#E1FF00')
+  const [photoUploading, setPhotoUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Bottom-sheet quick-edit for a single field (phone / nickname / bio)
+  const [sheet, setSheet] = useState<SheetField | null>(null)
+  const [sheetValue, setSheetValue] = useState('')
+  const [sheetSaving, setSheetSaving] = useState(false)
 
   const roadmapItems = currentLang === 'ru'
     ? ['Секретные чаты (E2EE)', 'Папки', 'Каналы', 'Стикеры']
     : ['Secret Chats (E2EE)', 'Folders', 'Channels', 'Stickers']
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    // Instant local preview…
     const reader = new FileReader()
-    reader.onloadend = () => {
-      setAvatar(reader.result as string)
-    }
+    reader.onloadend = () => setAvatar(reader.result as string)
     reader.readAsDataURL(file)
+    // …then upload to Storage so the DB only ever stores a short URL (fast, reliable).
+    setPhotoUploading(true)
+    const url = await uploadMedia(file, file.name || 'avatar.jpg')
+    if (url) setAvatar(url)
+    setPhotoUploading(false)
+    e.target.value = ''
+  }
+
+  // Never write a giant base64 string to the DB — upload it first if needed.
+  const resolveAvatar = async (value: string): Promise<string> => {
+    if (!value.startsWith('data:')) return value
+    try {
+      const blob = await (await fetch(value)).blob()
+      const url = await uploadMedia(blob, 'avatar.jpg')
+      return url || value
+    } catch {
+      return value
+    }
   }
 
   const handleSave = async () => {
     if (!name.trim() || !handle.trim()) return
-    const success = await updateProfile({ name, handle, bio, avatar, color, phone })
+    const finalAvatar = await resolveAvatar(avatar)
+    const success = await updateProfile({ name, handle, bio, avatar: finalAvatar, color, phone })
     if (success) {
+      setAvatar(finalAvatar)
       setEditing(false)
     } else {
       alert(currentLang === 'ru' ? 'Ошибка сохранения профиля' : 'Error saving profile')
     }
+  }
+
+  const openSheet = (field: SheetField) => {
+    setSheetValue(field === 'phone' ? me.phone || '' : field === 'handle' ? me.handle.replace(/^@/, '') : me.bio || '')
+    setSheet(field)
+  }
+
+  const saveSheet = async () => {
+    if (!sheet) return
+    setSheetSaving(true)
+    const ok = await updateProfile({
+      name: me.name,
+      handle: sheet === 'handle' ? sheetValue : me.handle,
+      bio: sheet === 'bio' ? sheetValue : me.bio || '',
+      phone: sheet === 'phone' ? sheetValue : me.phone || '',
+      avatar: me.avatar || '',
+      color: me.color,
+    })
+    setSheetSaving(false)
+    if (ok) setSheet(null)
+    else alert(currentLang === 'ru' ? 'Ошибка сохранения' : 'Save failed')
   }
 
   return (
@@ -74,15 +124,35 @@ export default function ProfilePanel() {
         )}
       </div>
 
-      {/* Always-mounted photo picker so "Choose photo" works from view mode too */}
+      {/* Always-mounted photo picker so "Set photo" works from view mode too */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(e) => {
-          handlePhotoChange(e)
-          if (!editing) setEditing(true)
+        onChange={async (e) => {
+          if (editing) {
+            // In the edit form the preview updates; Save persists it.
+            handlePhotoChange(e)
+            return
+          }
+          // View mode → upload and save the new photo immediately.
+          const file = e.target.files?.[0]
+          if (!file) return
+          setPhotoUploading(true)
+          const url = await uploadMedia(file, file.name || 'avatar.jpg')
+          if (url) {
+            await updateProfile({
+              name: me.name,
+              handle: me.handle,
+              bio: me.bio || '',
+              phone: me.phone || '',
+              avatar: url,
+              color: me.color,
+            })
+          }
+          setPhotoUploading(false)
+          e.target.value = ''
         }}
       />
 
@@ -152,7 +222,18 @@ export default function ProfilePanel() {
         <>
           {/* Telegram-style header — big avatar, name, status */}
           <div className="mt-6 flex flex-col items-center text-center">
-            <Avatar name={me.name} color={me.color} url={me.avatar} size={96} ring />
+            <button
+              type="button"
+              onClick={() => !photoUploading && fileInputRef.current?.click()}
+              className="relative rounded-full"
+            >
+              <Avatar name={me.name} color={me.color} url={me.avatar} size={96} ring />
+              {photoUploading && (
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45">
+                  <span className="beam-spin inline-block h-6 w-6 rounded-full border-2 border-lime border-t-transparent" />
+                </span>
+              )}
+            </button>
             <h2 className="mt-4 text-display leading-none text-black">{me.name}</h2>
             <p className="mt-2 text-body-s font-semibold text-green-600">{ru ? 'в сети' : 'online'}</p>
           </div>
@@ -182,18 +263,18 @@ export default function ProfilePanel() {
               <InfoRow
                 value={me.phone || (ru ? 'Не указан' : 'Not set')}
                 caption={ru ? 'Телефон' : 'Phone'}
-                onClick={() => setEditing(true)}
+                onClick={() => openSheet('phone')}
               />
               <InfoRow
                 value={me.handle}
                 caption={ru ? 'Имя пользователя' : 'Username'}
-                onClick={() => setEditing(true)}
+                onClick={() => openSheet('handle')}
               />
               <InfoRow
                 value={me.bio || (ru ? 'Добавить описание' : 'Add a bio')}
                 caption={ru ? 'О себе' : 'Bio'}
                 muted={!me.bio}
-                onClick={() => setEditing(true)}
+                onClick={() => openSheet('bio')}
               />
             </ListCard>
           </div>
@@ -213,6 +294,21 @@ export default function ProfilePanel() {
           </div>
         </>
       )}
+
+      {/* Bottom sheet — quick edit for one field */}
+      <AnimatePresence>
+        {sheet && (
+          <FieldSheet
+            field={sheet}
+            value={sheetValue}
+            onChange={setSheetValue}
+            onClose={() => setSheet(null)}
+            onSave={saveSheet}
+            saving={sheetSaving}
+            ru={ru}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -245,6 +341,98 @@ function InfoRow({
       </div>
       <IconChevronRight size={18} className="shrink-0 text-grey-mid" />
     </button>
+  )
+}
+
+// Slide-up sheet for editing a single profile field.
+function FieldSheet({
+  field,
+  value,
+  onChange,
+  onClose,
+  onSave,
+  saving,
+  ru,
+}: {
+  field: SheetField
+  value: string
+  onChange: (v: string) => void
+  onClose: () => void
+  onSave: () => void
+  saving: boolean
+  ru: boolean
+}) {
+  const title =
+    field === 'phone' ? (ru ? 'Телефон' : 'Phone')
+    : field === 'handle' ? (ru ? 'Имя пользователя' : 'Username')
+    : (ru ? 'О себе' : 'Bio')
+
+  return (
+    <div className="absolute inset-0 z-[70] flex items-end justify-center bg-black/45 sm:rounded-[40px]">
+      <div className="absolute inset-0" onClick={onClose} />
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-[440px] rounded-t-[28px] bg-white p-5 pb-7 shadow-lift"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-black/15" />
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-section text-black">{title}</h3>
+          <button
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-grey-soft text-ink hover:bg-[#E9E9E9]"
+          >
+            <IconClose size={18} />
+          </button>
+        </div>
+
+        {field === 'bio' ? (
+          <textarea
+            autoFocus
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            rows={3}
+            placeholder={ru ? 'Расскажите о себе' : 'Tell about yourself'}
+            className="w-full resize-none rounded-ctrl bg-grey-soft px-4 py-3 text-body-l font-medium text-ink outline-none"
+          />
+        ) : field === 'handle' ? (
+          <div className="flex items-center gap-1 rounded-ctrl bg-grey-soft px-4 py-3">
+            <span className="text-body-l font-semibold text-grey-mid">@</span>
+            <input
+              autoFocus
+              value={value.replace(/^@/, '')}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder="username"
+              className="w-full bg-transparent text-body-l font-medium text-ink outline-none"
+            />
+          </div>
+        ) : (
+          <input
+            autoFocus
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            inputMode="tel"
+            placeholder="+996 555 000 123"
+            className="w-full rounded-ctrl bg-grey-soft px-4 py-3 text-body-l font-medium text-ink outline-none"
+          />
+        )}
+
+        <button
+          onClick={onSave}
+          disabled={saving}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-pill bg-black py-3.5 text-btn text-lime transition active:scale-[0.98] disabled:opacity-50"
+        >
+          {saving ? (
+            <span className="beam-spin inline-block h-4 w-4 rounded-full border-2 border-lime border-t-transparent" />
+          ) : (
+            ru ? 'Сохранить' : 'Save'
+          )}
+        </button>
+      </motion.div>
+    </div>
   )
 }
 
