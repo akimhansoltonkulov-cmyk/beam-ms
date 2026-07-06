@@ -18,6 +18,7 @@ import type { Message } from '../types'
 import MessageBubble from './MessageBubble'
 import Composer from './Composer'
 import { EditChatModal } from './GroupModals'
+import UserProfileModal from './UserProfileModal'
 import { IconEdit } from '../components/Icons'
 import { useTranslation } from '../lib/i18n'
 
@@ -40,6 +41,7 @@ export default function ChatWindow() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [peerOpen, setPeerOpen] = useState(false)
   const [query, setQuery] = useState('')
 
   const allMessages = useMemo(
@@ -86,8 +88,14 @@ export default function ChatWindow() {
           <Avatar name={chat.name} color={chat.color} size={40} online={isOnline} />
           <button
             type="button"
-            onClick={() => chat.kind !== 'dm' && setEditOpen(true)}
-            disabled={chat.kind === 'dm'}
+            onClick={() => {
+              if (chat.kind === 'dm') {
+                if (other) setPeerOpen(true)
+              } else {
+                setEditOpen(true)
+              }
+            }}
+            disabled={chat.kind === 'dm' && !other}
             className="ml-2 min-w-0 flex-1 text-left"
           >
             <h2 className="truncate text-subtitle text-black">{chat.name}</h2>
@@ -220,6 +228,11 @@ export default function ChatWindow() {
       {/* Group / channel edit modal */}
       <AnimatePresence>
         {editOpen && <EditChatModal chatId={chat.id} onClose={() => setEditOpen(false)} />}
+      </AnimatePresence>
+
+      {/* Peer profile (DM) */}
+      <AnimatePresence>
+        {peerOpen && other && <UserProfileModal userId={other.id} onClose={() => setPeerOpen(false)} />}
       </AnimatePresence>
 
       {/* In-chat search bar */}
