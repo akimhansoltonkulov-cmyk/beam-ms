@@ -30,3 +30,6 @@ Thumbs.db
 .vite/
 .idea/
 .vscode/
+
+# Local backup copy of the project (not tracked)
+Beam Messanger/
