@@ -29,7 +29,7 @@ export default function FloatingDock() {
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 24, delay: 0.15 }}
-        className="glass pointer-events-auto flex items-center gap-2 rounded-pill border border-white/40 p-2 shadow-dock"
+        className="beam-dock pointer-events-auto flex items-center gap-2 rounded-pill p-2 shadow-dock"
       >
         {items.map((it) => (
           <DockBtn key={it.id} active={view === it.id} onClick={() => go(it.id)} label={it.label}>
