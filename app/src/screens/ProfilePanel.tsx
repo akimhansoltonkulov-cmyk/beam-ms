@@ -2,14 +2,12 @@ import { useState, useRef } from 'react'
 import { useStore } from '../store'
 import { Avatar } from '../components/ui'
 import { useTranslation } from '../lib/i18n'
-import { IconBolt, IconChevronRight, IconGrid, IconLock, IconShield } from '../components/Icons'
+import { IconChevronRight, IconEdit, IconImage, IconSettings } from '../components/Icons'
 
 export default function ProfilePanel() {
   const { t, lang: currentLang } = useTranslation()
   const ru = currentLang === 'ru'
   const me = useStore((s) => s.me)
-  const packets = useStore((s) => s.packets)
-  const messages = useStore((s) => s.messages)
   const setView = useStore((s) => s.setView)
   const updateProfile = useStore((s) => s.updateProfile)
 
@@ -21,8 +19,6 @@ export default function ProfilePanel() {
   const [avatar, setAvatar] = useState(me.avatar || '')
   const [color, setColor] = useState(me.color || '#E1FF00')
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const sent = messages.filter((m) => m.authorId === 'me').length
 
   const roadmapItems = currentLang === 'ru'
     ? ['Секретные чаты (E2EE)', 'Папки', 'Каналы', 'Стикеры']
@@ -52,14 +48,7 @@ export default function ProfilePanel() {
     <div className="beam-scroll flex h-full flex-col overflow-y-auto px-5 pb-40 pt-4">
       <div className="flex items-center justify-between">
         <h1 className="text-section text-black">{t('profile')}</h1>
-        {!editing ? (
-          <button
-            onClick={() => setEditing(true)}
-            className="rounded-pill bg-grey-soft px-4 py-1.5 text-body-s font-bold text-ink hover:bg-black hover:text-white transition"
-          >
-            {currentLang === 'ru' ? 'Редактировать' : 'Edit'}
-          </button>
-        ) : (
+        {editing && (
           <div className="flex gap-2">
             <button
               onClick={() => {
@@ -85,6 +74,18 @@ export default function ProfilePanel() {
         )}
       </div>
 
+      {/* Always-mounted photo picker so "Choose photo" works from view mode too */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          handlePhotoChange(e)
+          if (!editing) setEditing(true)
+        }}
+      />
+
       {editing ? (
         <div className="mt-6 rounded-card bg-white p-6 shadow-card space-y-4">
           <div className="flex flex-col items-center gap-3">
@@ -94,13 +95,6 @@ export default function ProfilePanel() {
                 📷
               </div>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoChange}
-            />
             <div className="flex gap-2.5">
               {['#E1FF00', '#B9E36B', '#7FC8F8', '#F5A9C5', '#C9A7F0', '#000000'].map((c) => (
                 <button
@@ -163,54 +157,45 @@ export default function ProfilePanel() {
             <p className="mt-2 text-body-s font-semibold text-green-600">{ru ? 'в сети' : 'online'}</p>
           </div>
 
-          {/* Info — phone, username, bio (tap to edit, Telegram-like) */}
-          <p className="mb-2 mt-7 px-2 text-body-s font-semibold uppercase tracking-wide text-grey-mid">
-            {ru ? 'Информация' : 'Info'}
-          </p>
-          <ListCard>
-            <InfoRow
-              value={me.phone || (ru ? 'Не указан' : 'Not set')}
-              caption={ru ? 'Телефон' : 'Phone'}
+          {/* Action buttons row (Telegram) */}
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            <ActionButton
+              icon={<IconImage size={20} />}
+              label={ru ? 'Выбрать фото' : 'Set photo'}
+              onClick={() => fileInputRef.current?.click()}
+            />
+            <ActionButton
+              icon={<IconEdit size={20} />}
+              label={ru ? 'Изменить' : 'Edit'}
               onClick={() => setEditing(true)}
             />
-            <InfoRow
-              value={me.handle}
-              caption={ru ? 'Имя пользователя' : 'Username'}
-              onClick={() => setEditing(true)}
+            <ActionButton
+              icon={<IconSettings size={20} />}
+              label={ru ? 'Настройки' : 'Settings'}
+              onClick={() => setView('settings')}
             />
-            <InfoRow
-              value={me.bio || (ru ? 'Добавить описание' : 'Add a bio')}
-              caption={ru ? 'О себе' : 'Bio'}
-              muted={!me.bio}
-              onClick={() => setEditing(true)}
-            />
-          </ListCard>
-
-          {/* Settings */}
-          <p className="mb-2 mt-7 px-2 text-body-s font-semibold uppercase tracking-wide text-grey-mid">
-            {ru ? 'Настройки' : 'Settings'}
-          </p>
-          <ListCard>
-            <SettingRow icon={<IconLock size={19} />} title={t('sec_sessions')} onClick={() => setView('settings')} />
-            <SettingRow icon={<IconBolt size={19} />} title={t('open_specs')} />
-            <SettingRow icon={<IconGrid size={19} />} title={t('qr_code')} />
-          </ListCard>
-
-          {/* Privacy status */}
-          <p className="mb-2 mt-7 px-2 text-body-s font-semibold uppercase tracking-wide text-grey-mid">
-            {ru ? 'Приватность' : 'Privacy'}
-          </p>
-          <div className="flex items-center gap-4 rounded-card bg-lime p-5 text-black">
-            <IconShield size={26} className="shrink-0" />
-            <div className="min-w-0">
-              <p className="text-subtitle leading-tight">{t('safe_trans')}</p>
-              <p className="mt-0.5 text-body-s opacity-70">{t('safe_trans_desc')}</p>
-            </div>
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-3">
-            <StatBox label={t('sent')} value={String(sent)} />
-            <StatBox label={t('packets')} value={String(packets.length)} />
-            <StatBox label={t('metadata')} value="0" />
+
+          {/* Info — phone, username, bio (tap to edit, Telegram-like) */}
+          <div className="mt-6">
+            <ListCard>
+              <InfoRow
+                value={me.phone || (ru ? 'Не указан' : 'Not set')}
+                caption={ru ? 'Телефон' : 'Phone'}
+                onClick={() => setEditing(true)}
+              />
+              <InfoRow
+                value={me.handle}
+                caption={ru ? 'Имя пользователя' : 'Username'}
+                onClick={() => setEditing(true)}
+              />
+              <InfoRow
+                value={me.bio || (ru ? 'Добавить описание' : 'Add a bio')}
+                caption={ru ? 'О себе' : 'Bio'}
+                muted={!me.bio}
+                onClick={() => setEditing(true)}
+              />
+            </ListCard>
           </div>
 
           {/* Roadmap */}
@@ -263,35 +248,23 @@ function InfoRow({
   )
 }
 
-// An icon + title settings row.
-function SettingRow({
+// Telegram-style stacked action button (icon over label).
+function ActionButton({
   icon,
-  title,
+  label,
   onClick,
 }: {
   icon: React.ReactNode
-  title: string
+  label: string
   onClick?: () => void
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-4 border-b border-black/[0.06] px-5 py-4 text-left transition last:border-b-0 hover:bg-black/[0.02]"
+      className="flex flex-col items-center justify-center gap-1.5 rounded-card bg-white/80 py-4 text-center transition hover:bg-white active:scale-[0.97]"
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-btn bg-grey-soft text-ink shrink-0">
-        {icon}
-      </span>
-      <p className="flex-1 truncate text-body-l font-medium text-ink">{title}</p>
-      <IconChevronRight size={18} className="shrink-0 text-grey-mid" />
+      <span className="text-ink">{icon}</span>
+      <span className="text-body-s font-semibold text-ink">{label}</span>
     </button>
-  )
-}
-
-function StatBox({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-ctrl bg-white/70 p-3.5 text-center">
-      <p className="text-section text-black">{value}</p>
-      <p className="mt-0.5 text-body-s text-grey-mid">{label}</p>
-    </div>
   )
 }
