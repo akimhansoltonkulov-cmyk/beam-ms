@@ -85,7 +85,7 @@ export default function ChatWindow() {
           >
             <IconBack size={22} />
           </button>
-          <Avatar name={chat.name} color={chat.color} size={40} online={isOnline} />
+          <Avatar name={chat.name} color={chat.color} size={40} online={isOnline} url={chat.kind === 'dm' ? other?.avatar : chat.avatar} />
           <button
             type="button"
             onClick={() => {
@@ -116,24 +116,6 @@ export default function ChatWindow() {
         </div>
 
         <div className="relative flex items-center gap-1 shrink-0">
-          {chat.kind === 'dm' && (
-            <>
-              <IconButton
-                title={currentLang === 'ru' ? 'Аудиозвонок' : 'Voice call'}
-                size={40}
-                onClick={() => startCall(chat.id, false)}
-              >
-                <IconPhone size={19} />
-              </IconButton>
-              <IconButton
-                title={currentLang === 'ru' ? 'Видеозвонок' : 'Video call'}
-                size={40}
-                onClick={() => startCall(chat.id, true)}
-              >
-                <IconVideo size={19} />
-              </IconButton>
-            </>
-          )}
           <IconButton
             title={currentLang === 'ru' ? 'Поиск в чате' : 'Search in chat'}
             size={40}
@@ -166,6 +148,28 @@ export default function ChatWindow() {
                   transition={{ duration: 0.14 }}
                   className="absolute right-0 top-12 z-30 w-52 overflow-hidden rounded-ctrl bg-white py-1.5 shadow-card"
                 >
+                  {chat.kind === 'dm' && (
+                    <>
+                      <MenuItem
+                        onClick={() => {
+                          setMenuOpen(false)
+                          startCall(chat.id, false)
+                        }}
+                      >
+                        <IconPhone size={17} />
+                        {currentLang === 'ru' ? 'Аудиозвонок' : 'Voice call'}
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          setMenuOpen(false)
+                          startCall(chat.id, true)
+                        }}
+                      >
+                        <IconVideo size={17} />
+                        {currentLang === 'ru' ? 'Видеозвонок' : 'Video call'}
+                      </MenuItem>
+                    </>
+                  )}
                   {chat.kind !== 'dm' && (
                     <MenuItem
                       onClick={() => {

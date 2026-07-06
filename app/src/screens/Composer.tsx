@@ -10,7 +10,7 @@ import { uploadMedia } from '../lib/supabase'
 let ac = 0
 
 export default function Composer({ chatId }: { chatId: string }) {
-  const { t, lang: currentLang } = useTranslation()
+  const { lang: currentLang } = useTranslation()
   const users = useStore((s) => s.users)
   const replyTo = useStore((s) => s.replyTo)
   const setReplyTo = useStore((s) => s.setReplyTo)
@@ -24,12 +24,16 @@ export default function Composer({ chatId }: { chatId: string }) {
   const [dragOver, setDragOver] = useState(false)
   const [recording, setRecording] = useState(false)
   const [recSecs, setRecSecs] = useState(0)
+  const [cancelling, setCancelling] = useState(false)
   const taRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const recTimer = useRef<number>()
   const mediaRec = useRef<MediaRecorder | null>(null)
   const recChunks = useRef<Blob[]>([])
   const recStream = useRef<MediaStream | null>(null)
+  const recSecsRef = useRef(0) // duration read from a ref so window listeners aren't stale
+  const recStartX = useRef(0)
+  const cancellingRef = useRef(false)
 
   const uploading = atts.some((a) => a.uploading)
 
@@ -93,7 +97,11 @@ export default function Composer({ chatId }: { chatId: string }) {
       rec.start()
       setRecording(true)
       setRecSecs(0)
-      recTimer.current = window.setInterval(() => setRecSecs((s) => s + 1), 1000)
+      recSecsRef.current = 0
+      recTimer.current = window.setInterval(() => {
+        recSecsRef.current += 1
+        setRecSecs(recSecsRef.current)
+      }, 1000)
     } catch {
       alert(currentLang === 'ru' ? 'Доступ к микрофону заблокирован.' : 'Microphone access denied.')
     }
@@ -108,9 +116,10 @@ export default function Composer({ chatId }: { chatId: string }) {
 
   const stopRec = (sendIt: boolean) => {
     const rec = mediaRec.current
-    const duration = recSecs
+    const duration = recSecsRef.current
     setRecording(false)
     setRecSecs(0)
+    setCancelling(false)
     if (!rec) {
       cleanupRec()
       return
@@ -132,6 +141,32 @@ export default function Composer({ chatId }: { chatId: string }) {
       ])
     }
     rec.stop()
+  }
+
+  // Press-and-hold voice: hold to record, release to send, swipe left to cancel.
+  const onMicMove = (e: PointerEvent) => {
+    const dx = e.clientX - recStartX.current
+    const c = dx < -70
+    if (c !== cancellingRef.current) {
+      cancellingRef.current = c
+      setCancelling(c)
+    }
+  }
+  const onMicUp = () => {
+    window.removeEventListener('pointermove', onMicMove)
+    window.removeEventListener('pointerup', onMicUp)
+    window.removeEventListener('pointercancel', onMicUp)
+    stopRec(!cancellingRef.current)
+  }
+  const onMicDown = (e: React.PointerEvent) => {
+    e.preventDefault()
+    recStartX.current = e.clientX
+    cancellingRef.current = false
+    setCancelling(false)
+    startRec()
+    window.addEventListener('pointermove', onMicMove)
+    window.addEventListener('pointerup', onMicUp)
+    window.addEventListener('pointercancel', onMicUp)
   }
 
   return (
@@ -210,25 +245,20 @@ export default function Composer({ chatId }: { chatId: string }) {
 
         {/* main bar */}
         {recording ? (
-          <div className="glass flex items-center gap-3 rounded-pill border border-black/5 px-4 py-3">
+          <div
+            className={`glass flex items-center gap-3 rounded-pill border px-4 py-3 transition-colors ${
+              cancelling ? 'border-red-400 bg-red-50' : 'border-black/5'
+            }`}
+          >
             <span className="flex h-3 w-3 items-center justify-center">
               <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
             </span>
-            <span className="flex-1 font-mono text-body-l font-semibold text-ink">
-              {currentLang === 'ru' ? 'Запись…' : 'Recording…'} {secs(recSecs)}
+            <span className="font-mono text-body-l font-semibold text-ink">{secs(recSecs)}</span>
+            <span className={`flex-1 truncate text-body-s ${cancelling ? 'font-bold text-red-500' : 'text-grey-mid'}`}>
+              {cancelling
+                ? currentLang === 'ru' ? 'Отпустите — отмена' : 'Release to cancel'
+                : currentLang === 'ru' ? '‹ Влево — отмена' : '‹ Slide to cancel'}
             </span>
-            <button
-              onClick={() => stopRec(false)}
-              className="rounded-pill px-3 py-1.5 text-body-s font-bold text-grey-mid"
-            >
-              {t('cancel')}
-            </button>
-            <button
-              onClick={() => stopRec(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-black text-lime"
-            >
-              <IconSend size={20} />
-            </button>
           </div>
         ) : (
           <div
@@ -292,9 +322,11 @@ export default function Composer({ chatId }: { chatId: string }) {
               </button>
             ) : (
               <button
-                onClick={startRec}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-grey-soft text-ink transition hover:bg-[#e6e6e6]"
-                title={currentLang === 'ru' ? 'Записать голос' : 'Record voice'}
+                onPointerDown={onMicDown}
+                onContextMenu={(e) => e.preventDefault()}
+                style={{ touchAction: 'none' }}
+                className="flex h-11 w-11 shrink-0 select-none items-center justify-center rounded-full bg-grey-soft text-ink transition hover:bg-[#e6e6e6] active:scale-95"
+                title={currentLang === 'ru' ? 'Зажмите для записи' : 'Hold to record'}
               >
                 <IconMic size={20} />
               </button>

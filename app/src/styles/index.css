@@ -82,6 +82,56 @@ body {
     linear-gradient(180deg, #e9ebe4 0%, #e6e8e1 100%);
 }
 
+/* ── Dark theme ─────────────────────────────────────────────────
+   The app uses fixed utility classes, so dark mode remaps the common
+   surface/text utilities under a root .dark class. */
+.dark body {
+  background: #0f1012;
+  color: #ececed;
+}
+.dark .app-wash {
+  background: #0f1012;
+}
+.dark .glass {
+  background: #16171a;
+}
+.dark .glass-dark {
+  background: #000000;
+}
+.dark .bg-white,
+.dark .bg-white\/70,
+.dark .bg-white\/75,
+.dark .bg-white\/80 {
+  background-color: #1b1d21 !important;
+}
+.dark .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+.dark .hover\:bg-white:hover {
+  background-color: #232529 !important;
+}
+.dark .bg-grey-soft {
+  background-color: #26282d !important;
+}
+.dark .hover\:bg-\[\#E9E9E9\]:hover,
+.dark .hover\:bg-\[\#e6e6e6\]:hover {
+  background-color: #303237 !important;
+}
+.dark .text-black,
+.dark .text-ink {
+  color: #ececed !important;
+}
+.dark .text-grey-mid {
+  color: #9a9a9f !important;
+}
+.dark .border-black\/5,
+.dark .border-black\/\[0\.06\] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.dark .beam-frame {
+  background: #0f1012;
+}
+
 @keyframes beam-spin {
   to {
     transform: rotate(360deg);

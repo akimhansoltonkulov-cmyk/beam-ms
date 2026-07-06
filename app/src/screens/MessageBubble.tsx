@@ -116,7 +116,7 @@ export default function MessageBubble({
     >
       {!mine && (
         <div className="w-8 shrink-0">
-          {!grouped && <Avatar name={author?.name ?? '?'} color={author?.color ?? '#ccc'} size={32} />}
+          {!grouped && <Avatar name={author?.name ?? '?'} color={author?.color ?? '#ccc'} size={32} url={author?.avatar} />}
         </div>
       )}
 

@@ -18,6 +18,8 @@ export default function SettingsPanel() {
   const { t, lang: currentLang } = useTranslation()
   const prefs = useStore((s) => s.prefs)
   const setPref = useStore((s) => s.setPref)
+  const theme = useStore((s) => s.theme)
+  const setTheme = useStore((s) => s.setTheme)
   const exportData = useStore((s) => s.exportData)
   const logout = useStore((s) => s.logout)
   const [exported, setExported] = useState(false)
@@ -51,6 +53,13 @@ export default function SettingsPanel() {
     <div className="beam-scroll flex h-full flex-col overflow-y-auto px-5 pb-40 pt-4">
       <h1 className="text-section text-black">{t('adjust_prefs')}</h1>
       <p className="mt-1 text-body-s text-grey-mid">{t('privacy_perf')}</p>
+
+      {/* Appearance */}
+      <Section title={t('appearance')} icon={<IconBolt size={16} />}>
+        <Row title={t('dark_theme')} desc={t('dark_theme_desc')}>
+          <Toggle on={theme === 'dark'} onChange={(v) => setTheme(v ? 'dark' : 'light')} />
+        </Row>
+      </Section>
 
       {/* Privacy */}
       <Section title={t('privacy_ind')} icon={<IconShield size={16} />}>

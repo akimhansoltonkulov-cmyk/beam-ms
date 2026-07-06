@@ -143,6 +143,25 @@ const readSession = (): string | null => {
   }
 }
 
+// Theme (light/dark) — persisted and applied as a root class.
+const THEME_KEY = 'beam.theme'
+type Theme = 'light' | 'dark'
+const readTheme = (): Theme => {
+  try {
+    return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'
+  } catch {
+    return 'light'
+  }
+}
+const applyTheme = (thm: Theme) => {
+  try {
+    document.documentElement.classList.toggle('dark', thm === 'dark')
+  } catch {
+    /* noop */
+  }
+}
+applyTheme(readTheme()) // apply immediately on load
+
 interface State {
   // session
   authed: boolean
@@ -167,6 +186,10 @@ interface State {
 
   // calls
   call: CallState | null
+
+  // appearance
+  theme: Theme
+  setTheme: (t: Theme) => void
 
   prefs: Prefs
 
@@ -267,6 +290,17 @@ export const useStore = create<State>((set, get) => ({
   connected: true,
 
   call: null,
+
+  theme: readTheme(),
+  setTheme: (thm) => {
+    try {
+      localStorage.setItem(THEME_KEY, thm)
+    } catch {
+      /* noop */
+    }
+    applyTheme(thm)
+    set({ theme: thm })
+  },
 
   prefs: {
     darkComposer: false,
