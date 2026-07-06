@@ -340,7 +340,9 @@ function InstallButton({ ru }: { ru: boolean }) {
       return
     }
     const res = await promptInstall()
-    if (res === 'unavailable') setIosHint(true)
+    // Chrome suppresses the native prompt for a while after an install/uninstall —
+    // fall back to manual instructions instead of silently doing nothing.
+    if (res !== 'accepted') setIosHint(true)
   }
 
   return (
@@ -359,11 +361,37 @@ function InstallButton({ ru }: { ru: boolean }) {
         <IconArrowUpRight size={18} className="shrink-0 text-white/60" />
       </button>
       {iosHint && (
-        <p className="mt-2 px-2 text-body-s text-grey-mid leading-snug">
-          {ru
-            ? 'Нажмите «Поделиться» → «На экран «Домой»», чтобы открыть Beam без адресной строки.'
-            : 'Tap Share → “Add to Home Screen” to run Beam without the address bar.'}
-        </p>
+        <div className="mt-2 rounded-ctrl bg-grey-soft px-4 py-3 text-body-s text-ink leading-snug">
+          {isIos ? (
+            ru
+              ? 'Нажмите «Поделиться» → «На экран «Домой»», чтобы открыть Beam без адресной строки.'
+              : 'Tap Share → “Add to Home Screen” to run Beam without the address bar.'
+          ) : (
+            <>
+              {ru ? (
+                <>
+                  Откройте меню Chrome <b>⋮</b> (справа вверху) → <b>«Установить приложение»</b> или{' '}
+                  <b>«Добавить на главный экран»</b>.
+                  <br />
+                  <span className="text-grey-mid">
+                    Если пункт неактивен после удаления — закройте все вкладки Beam и полностью
+                    перезапустите Chrome (или подождите пару минут): браузер временно блокирует повторную
+                    установку.
+                  </span>
+                </>
+              ) : (
+                <>
+                  Open the Chrome menu <b>⋮</b> → <b>Install app</b> / <b>Add to Home screen</b>.
+                  <br />
+                  <span className="text-grey-mid">
+                    If it’s greyed out after uninstalling, fully restart Chrome (or wait a couple of
+                    minutes) — the browser briefly blocks re-installing.
+                  </span>
+                </>
+              )}
+            </>
+          )}
+        </div>
       )}
     </div>
   )
