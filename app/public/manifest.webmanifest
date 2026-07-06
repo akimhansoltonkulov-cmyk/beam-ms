@@ -4,7 +4,6 @@
   "description": "Instant. Private. Transparent.",
   "start_url": "/",
   "display": "standalone",
-  "display_override": ["fullscreen", "standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#e9ebe4",
   "theme_color": "#e9ebe4",
