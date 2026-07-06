@@ -6,6 +6,7 @@ import { IconBolt, IconChevronRight, IconGrid, IconLock, IconShield } from '../c
 
 export default function ProfilePanel() {
   const { t, lang: currentLang } = useTranslation()
+  const ru = currentLang === 'ru'
   const me = useStore((s) => s.me)
   const packets = useStore((s) => s.packets)
   const messages = useStore((s) => s.messages)
@@ -155,48 +156,72 @@ export default function ProfilePanel() {
         </div>
       ) : (
         <>
-          {/* hero card */}
-          <div className="relative mt-6 overflow-hidden rounded-card bg-black p-8 text-white">
-            <div className="halftone-lime pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full opacity-25" />
-            <div className="relative flex items-center gap-5">
-              <Avatar name={me.name} color={me.color} url={me.avatar} size={72} ring />
-              <div>
-                <h2 className="text-display leading-none">{me.name}</h2>
-                <p className="mt-1.5 text-body-l text-white/60">{me.handle}</p>
-                {me.phone && <p className="mt-0.5 text-body-s text-white/40">{me.phone}</p>}
-              </div>
-            </div>
-            {me.bio && <p className="relative mt-5 text-body-l text-white/80 leading-relaxed">{me.bio}</p>}
-            <div className="relative mt-6 flex gap-3">
-              <Metric label={t('sent')} value={String(sent)} />
-              <Metric label={t('packets')} value={String(packets.length)} accent />
-              <Metric label={t('metadata')} value="0" accent />
-            </div>
+          {/* Telegram-style header — big avatar, name, status */}
+          <div className="mt-6 flex flex-col items-center text-center">
+            <Avatar name={me.name} color={me.color} url={me.avatar} size={96} ring />
+            <h2 className="mt-4 text-display leading-none text-black">{me.name}</h2>
+            <p className="mt-2 text-body-s font-semibold text-green-600">{ru ? 'в сети' : 'online'}</p>
           </div>
 
-          {/* status */}
-          <div className="mt-6 flex items-center gap-4 rounded-card bg-lime p-6 text-black">
-            <IconShield size={28} className="shrink-0" />
-            <div>
-              <p className="text-section leading-tight">{t('safe_trans')}</p>
-              <p className="text-body-s opacity-70 mt-0.5">{t('safe_trans_desc')}</p>
+          {/* Info — phone, username, bio (tap to edit, Telegram-like) */}
+          <p className="mb-2 mt-7 px-2 text-body-s font-semibold uppercase tracking-wide text-grey-mid">
+            {ru ? 'Информация' : 'Info'}
+          </p>
+          <ListCard>
+            <InfoRow
+              value={me.phone || (ru ? 'Не указан' : 'Not set')}
+              caption={ru ? 'Телефон' : 'Phone'}
+              onClick={() => setEditing(true)}
+            />
+            <InfoRow
+              value={me.handle}
+              caption={ru ? 'Имя пользователя' : 'Username'}
+              onClick={() => setEditing(true)}
+            />
+            <InfoRow
+              value={me.bio || (ru ? 'Добавить описание' : 'Add a bio')}
+              caption={ru ? 'О себе' : 'Bio'}
+              muted={!me.bio}
+              onClick={() => setEditing(true)}
+            />
+          </ListCard>
+
+          {/* Settings */}
+          <p className="mb-2 mt-7 px-2 text-body-s font-semibold uppercase tracking-wide text-grey-mid">
+            {ru ? 'Настройки' : 'Settings'}
+          </p>
+          <ListCard>
+            <SettingRow icon={<IconLock size={19} />} title={t('sec_sessions')} onClick={() => setView('settings')} />
+            <SettingRow icon={<IconBolt size={19} />} title={t('open_specs')} />
+            <SettingRow icon={<IconGrid size={19} />} title={t('qr_code')} />
+          </ListCard>
+
+          {/* Privacy status */}
+          <p className="mb-2 mt-7 px-2 text-body-s font-semibold uppercase tracking-wide text-grey-mid">
+            {ru ? 'Приватность' : 'Privacy'}
+          </p>
+          <div className="flex items-center gap-4 rounded-card bg-lime p-5 text-black">
+            <IconShield size={26} className="shrink-0" />
+            <div className="min-w-0">
+              <p className="text-subtitle leading-tight">{t('safe_trans')}</p>
+              <p className="mt-0.5 text-body-s opacity-70">{t('safe_trans_desc')}</p>
             </div>
           </div>
-
-          {/* actions */}
-          <div className="mt-6 space-y-3.5">
-            <ActionRow icon={<IconLock size={20} />} title={t('sec_sessions')} desc={t('sec_sessions_desc')} onClick={() => setView('settings')} />
-            <ActionRow icon={<IconBolt size={20} />} title={t('open_specs')} desc={t('open_specs_desc')} />
-            <ActionRow icon={<IconGrid size={20} />} title={t('qr_code')} desc={t('qr_code_desc')} />
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <StatBox label={t('sent')} value={String(sent)} />
+            <StatBox label={t('packets')} value={String(packets.length)} />
+            <StatBox label={t('metadata')} value="0" />
           </div>
 
-          {/* roadmap teaser */}
-          <div className="mt-8 rounded-card bg-white/70 p-6">
-            <p className="mb-3.5 text-section text-black">{t('coming_soon')}</p>
+          {/* Roadmap */}
+          <p className="mb-2 mt-7 px-2 text-body-s font-semibold uppercase tracking-wide text-grey-mid">
+            {t('coming_soon')}
+          </p>
+          <div className="rounded-card bg-white/70 p-5">
             <div className="flex flex-wrap gap-2.5">
-              {roadmapItems.map((t) => (
-                <span key={t} className="rounded-pill bg-grey-soft px-3.5 py-2 text-body-s font-semibold text-ink">
-                  {t}
+              {roadmapItems.map((label) => (
+                <span key={label} className="rounded-pill bg-grey-soft px-3.5 py-2 text-body-s font-semibold text-ink">
+                  {label}
                 </span>
               ))}
             </div>
@@ -207,39 +232,66 @@ export default function ProfilePanel() {
   )
 }
 
-function Metric({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+// Grouped list card — Telegram-style rows with hairline dividers.
+function ListCard({ children }: { children: React.ReactNode }) {
+  return <div className="overflow-hidden rounded-card bg-white/80">{children}</div>
+}
+
+// A tappable "value over caption" row (phone / username / bio).
+function InfoRow({
+  value,
+  caption,
+  onClick,
+  muted,
+}: {
+  value: string
+  caption: string
+  onClick?: () => void
+  muted?: boolean
+}) {
   return (
-    <div className="flex-1 rounded-ctrl bg-white/10 p-4 text-center">
-      <p className={`text-section ${accent ? 'text-lime' : 'text-white'}`}>{value}</p>
-      <p className="text-body-s text-white/50 mt-0.5">{label}</p>
-    </div>
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-3 border-b border-black/[0.06] px-5 py-3.5 text-left transition last:border-b-0 hover:bg-black/[0.02]"
+    >
+      <div className="min-w-0 flex-1">
+        <p className={`truncate text-body-l font-medium ${muted ? 'text-grey-mid' : 'text-ink'}`}>{value}</p>
+        <p className="mt-0.5 text-body-s text-grey-mid">{caption}</p>
+      </div>
+      <IconChevronRight size={18} className="shrink-0 text-grey-mid" />
+    </button>
   )
 }
 
-function ActionRow({
+// An icon + title settings row.
+function SettingRow({
   icon,
   title,
-  desc,
   onClick,
 }: {
   icon: React.ReactNode
   title: string
-  desc: string
   onClick?: () => void
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-4 rounded-ctrl bg-white/70 py-5 px-5 text-left transition hover:bg-white"
+      className="flex w-full items-center gap-4 border-b border-black/[0.06] px-5 py-4 text-left transition last:border-b-0 hover:bg-black/[0.02]"
     >
-      <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-grey-soft text-ink shrink-0">
+      <span className="flex h-9 w-9 items-center justify-center rounded-btn bg-grey-soft text-ink shrink-0">
         {icon}
       </span>
-      <div className="flex-1 min-w-0">
-        <p className="text-body-l font-semibold text-ink truncate">{title}</p>
-        <p className="text-body-s text-grey-mid mt-0.5 truncate">{desc}</p>
-      </div>
-      <IconChevronRight size={20} className="text-grey-mid shrink-0" />
+      <p className="flex-1 truncate text-body-l font-medium text-ink">{title}</p>
+      <IconChevronRight size={18} className="shrink-0 text-grey-mid" />
     </button>
+  )
+}
+
+function StatBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-ctrl bg-white/70 p-3.5 text-center">
+      <p className="text-section text-black">{value}</p>
+      <p className="mt-0.5 text-body-s text-grey-mid">{label}</p>
+    </div>
   )
 }
