@@ -19,6 +19,7 @@ export default function Sidebar() {
   const [dirLoading, setDirLoading] = useState(false)
   const [showNewMenu, setShowNewMenu] = useState(false)
   const [createKind, setCreateKind] = useState<'group' | 'channel' | null>(null)
+  const [filter, setFilter] = useState<'all' | 'unread' | 'groups' | 'pinned'>('all')
 
   const chats = useStore((s) => s.chats)
   const messages = useStore((s) => s.messages)
@@ -54,17 +55,23 @@ export default function Sidebar() {
   const searching = view === 'search'
   const list = useMemo(() => {
     let arr = chats.filter((c) => !(c as any).archived)
-    if (q)
+    if (q) {
       arr = arr.filter(
         (c) =>
           c.name.toLowerCase().includes(q) ||
           (lastByChat[c.id]?.text ?? '').toLowerCase().includes(q),
       )
+    } else {
+      // Filter pills (only when not searching)
+      if (filter === 'unread') arr = arr.filter((c) => (unreadByChat[c.id] ?? 0) > 0)
+      else if (filter === 'groups') arr = arr.filter((c) => c.kind === 'group' || c.kind === 'channel')
+      else if (filter === 'pinned') arr = arr.filter((c) => c.pinned)
+    }
     return arr.sort((a, b) => {
       if (!!b.pinned !== !!a.pinned) return a.pinned ? -1 : 1
       return (lastByChat[b.id]?.createdAt ?? 0) - (lastByChat[a.id]?.createdAt ?? 0)
     })
-  }, [chats, q, lastByChat])
+  }, [chats, q, lastByChat, filter, unreadByChat])
 
   const contactsList = useMemo(() => {
     let arr = Object.values(users).filter((u) => u.id !== 'me' && u.id !== 'team')
@@ -78,9 +85,10 @@ export default function Sidebar() {
     return arr.sort((a, b) => a.name.localeCompare(b.name))
   }, [users, q])
 
-  // Global directory search — find registered users by @nickname or name (Supabase)
+  // Global directory search — find registered users by @nickname or name (Supabase).
+  // Runs in any view so the Chats search finds contacts too.
   useEffect(() => {
-    if (!searching || q.length < 2) {
+    if (q.length < 2) {
       setDirLoading(false)
       return
     }
@@ -90,7 +98,7 @@ export default function Sidebar() {
       setDirLoading(false)
     }, 350)
     return () => clearTimeout(h)
-  }, [q, searching, searchUsers])
+  }, [q, searchUsers])
 
   // message hits for global search
   const msgHits = useMemo(() => {
@@ -100,6 +108,47 @@ export default function Sidebar() {
       .slice(-8)
       .reverse()
   }, [messages, q])
+
+  const renderChatCard = (chat: Chat, i: number) => (
+    <ChatCard
+      key={chat.id}
+      chat={chat}
+      last={lastByChat[chat.id]}
+      unread={unreadByChat[chat.id] ?? 0}
+      active={chat.id === activeChatId}
+      authorName={lastByChat[chat.id] ? users[lastByChat[chat.id]!.authorId]?.name?.split(' ')[0] || '' : ''}
+      online={chat.kind === 'dm' ? online[chat.members.find((m) => m !== 'me' && m !== meId)!] : undefined}
+      index={i}
+      onClick={() => openChat(chat.id)}
+      togglePinChat={togglePinChat}
+      archiveChat={archiveChat}
+      deleteChat={deleteChat}
+    />
+  )
+
+  const contactRow = (contact: (typeof contactsList)[number]) => (
+    <button
+      key={contact.id}
+      onClick={() => startChat(contact.id)}
+      className="flex w-full items-center gap-3 rounded-card bg-white/75 px-3 py-2.5 text-left hover:bg-white transition-all"
+    >
+      <Avatar name={contact.name} color={contact.color} size={46} url={contact.avatar} />
+      <div className="min-w-0 flex-1">
+        <p className="text-body-l font-semibold text-ink">{contact.name}</p>
+        <p className="text-body-s text-grey-mid">{contact.handle}</p>
+      </div>
+    </button>
+  )
+
+  const sectionLabel = (text: string) => (
+    <p className="px-1 pb-1 pt-3 text-body-s font-semibold uppercase tracking-wide text-grey-mid">{text}</p>
+  )
+
+  const dmAvatar = (chat: Chat) => {
+    if (chat.kind !== 'dm') return chat.avatar
+    const otherId = chat.members.find((m) => m !== 'me' && m !== meId)
+    return otherId ? users[otherId]?.avatar : chat.avatar
+  }
 
   return (
     <div className="flex h-full flex-col px-4 pt-4 relative">
@@ -175,8 +224,7 @@ export default function Sidebar() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          onFocus={() => view !== 'search' && setView('search')}
-          placeholder={searching ? t('search_contacts_ph') : t('search_placeholder')}
+          placeholder={t('search_placeholder')}
           className="w-full bg-transparent text-body-l text-ink outline-none placeholder:text-grey-mid"
         />
         {search && (
@@ -189,10 +237,10 @@ export default function Sidebar() {
       {/* Filter pills */}
       {!q && !searching && (
         <div className="mb-3 flex gap-2 overflow-x-auto pb-1 beam-scroll">
-          <Pill active>{t('all')}</Pill>
-          <Pill>{t('unread')}</Pill>
-          <Pill>{t('groups')}</Pill>
-          <Pill>{t('pinned')}</Pill>
+          <Pill active={filter === 'all'} onClick={() => setFilter('all')}>{t('all')}</Pill>
+          <Pill active={filter === 'unread'} onClick={() => setFilter('unread')}>{t('unread')}</Pill>
+          <Pill active={filter === 'groups'} onClick={() => setFilter('groups')}>{t('groups')}</Pill>
+          <Pill active={filter === 'pinned'} onClick={() => setFilter('pinned')}>{t('pinned')}</Pill>
         </div>
       )}
 
@@ -239,19 +287,7 @@ export default function Sidebar() {
       <div className="beam-scroll -mx-1 flex-1 space-y-2.5 overflow-y-auto px-1 pb-40">
         {searching ? (
           <>
-            {contactsList.map((contact) => (
-              <button
-                key={contact.id}
-                onClick={() => startChat(contact.id)}
-                className="flex w-full items-center gap-3 rounded-card bg-white/75 px-3 py-2.5 text-left hover:bg-white transition-all"
-              >
-                <Avatar name={contact.name} color={contact.color} size={46} url={contact.avatar} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-body-l font-semibold text-ink">{contact.name}</p>
-                  <p className="text-body-s text-grey-mid">{contact.handle}</p>
-                </div>
-              </button>
-            ))}
+            {contactsList.map((contact) => contactRow(contact))}
 
             {contactsList.length === 0 && (
               <div className="mt-10 flex flex-col items-center gap-2 text-center text-body-s text-grey-mid">
@@ -268,13 +304,19 @@ export default function Sidebar() {
               </div>
             )}
           </>
-        ) : (
+        ) : q ? (
+          /* Combined search results in the Chats view: contacts + messages + chats */
           <>
-            {q && msgHits.length > 0 && (
+            {contactsList.length > 0 && (
               <>
-                <p className="px-1 pb-1 pt-2 text-body-s font-semibold uppercase tracking-wide text-grey-mid">
-                  {t('messages')}
-                </p>
+                {sectionLabel(t('contacts'))}
+                {contactsList.map((contact) => contactRow(contact))}
+              </>
+            )}
+
+            {msgHits.length > 0 && (
+              <>
+                {sectionLabel(t('messages'))}
                 {msgHits.map((m) => {
                   const chat = chats.find((c) => c.id === m.chatId)
                   if (!chat) return null
@@ -284,43 +326,40 @@ export default function Sidebar() {
                       onClick={() => openChat(m.chatId)}
                       className="flex w-full items-center gap-3 rounded-ctrl bg-white/70 p-3 text-left hover:bg-white"
                     >
-                      <Avatar name={chat.name} color={chat.color} size={38} />
+                      <Avatar name={chat.name} color={chat.color} size={38} url={dmAvatar(chat)} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-body-s font-bold text-ink">{chat.name}</p>
-                        <p className="truncate text-body-s text-grey-mid">
-                          {highlight(m.text, q)}
-                        </p>
+                        <p className="truncate text-body-s text-grey-mid">{highlight(m.text, q)}</p>
                       </div>
                     </button>
                   )
                 })}
-                <p className="px-1 pb-1 pt-3 text-body-s font-semibold uppercase tracking-wide text-grey-mid">
-                  Chats
-                </p>
               </>
             )}
 
-            {list.map((chat, i) => (
-              <ChatCard
-                key={chat.id}
-                chat={chat}
-                last={lastByChat[chat.id]}
-                unread={unreadByChat[chat.id] ?? 0}
-                active={chat.id === activeChatId}
-                authorName={
-                  lastByChat[chat.id]
-                    ? users[lastByChat[chat.id]!.authorId]?.name?.split(' ')[0] || ''
-                    : ''
-                }
-                online={chat.kind === 'dm' ? online[chat.members.find((m) => m !== 'me' && m !== meId)!] : undefined}
-                index={i}
-                onClick={() => openChat(chat.id)}
-                togglePinChat={togglePinChat}
-                archiveChat={archiveChat}
-                deleteChat={deleteChat}
-              />
-            ))}
+            {list.length > 0 && (
+              <>
+                {sectionLabel(t('chats'))}
+                {list.map((chat, i) => renderChatCard(chat, i))}
+              </>
+            )}
 
+            {contactsList.length === 0 && msgHits.length === 0 && list.length === 0 && (
+              <div className="mt-10 flex flex-col items-center gap-2 text-center text-body-s text-grey-mid">
+                {dirLoading ? (
+                  <>
+                    <span className="beam-spin inline-block h-5 w-5 rounded-full border-2 border-grey-mid border-t-transparent" />
+                    {t('searching_dir')}
+                  </>
+                ) : (
+                  t('no_results')
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {list.map((chat, i) => renderChatCard(chat, i))}
             {list.length === 0 && (
               <div className="mt-10 text-center text-body-s text-grey-mid">{t('no_results')}</div>
             )}
@@ -608,8 +647,8 @@ function previewText(m?: Message, t: any = (k: string) => k): string {
   if (m.deleted) return t('deleted')
   if (m.attachments?.length) {
     const a = m.attachments[0]
-    if (a.kind === 'image') return '📷 Photo'
-    if (a.kind === 'voice') return '🎙️ Voice message'
+    if (a.kind === 'image') return t('photo')
+    if (a.kind === 'voice') return t('voice_message')
     return `📎 ${a.name}`
   }
   return m.text
