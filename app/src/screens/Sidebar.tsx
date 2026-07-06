@@ -495,7 +495,7 @@ function ChatCard({
         </div>
       </div>
       {unread > 0 && (
-        <span className="ml-1 mt-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-lime px-1.5 text-body-s font-bold text-black">
+        <span className="ml-1 mt-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-lime px-1.5 text-body-s font-bold text-white">
           {unread}
         </span>
       )}

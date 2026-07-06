@@ -105,7 +105,7 @@ export default function SettingsPanel() {
           onClick={doExport}
           className="flex w-full items-center gap-3 rounded-ctrl bg-grey-soft p-4 text-left transition hover:bg-[#e9e9e9]"
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-lime text-black">
+          <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-lime text-white">
             <IconDownload size={20} />
           </span>
           <div className="flex-1">
@@ -130,7 +130,7 @@ export default function SettingsPanel() {
           disabled={installed}
           className="flex w-full items-center gap-3 rounded-ctrl bg-black p-4 text-left text-white transition hover:bg-[#1a1a1a] disabled:opacity-60"
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-lime text-black">
+          <span className="flex h-11 w-11 items-center justify-center rounded-btn bg-lime text-white">
             <IconGrid size={20} />
           </span>
           <div className="flex-1">
@@ -180,7 +180,7 @@ function Section({
   return (
     <div className="mt-6 rounded-card bg-white/70 p-5">
       <div className="mb-4 flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-lime text-black">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-lime text-white">
           {icon}
         </span>
         <h2 className="text-section text-black">{title}</h2>
@@ -220,7 +220,7 @@ function SessionRow({ name, meta, current }: { name: string; meta: string; curre
         <p className="text-body-s text-grey-mid">{meta}</p>
       </div>
       {current ? (
-        <span className="rounded-pill bg-lime px-3 py-1 text-body-s font-bold text-black">Active</span>
+        <span className="rounded-pill bg-lime px-3 py-1 text-body-s font-bold text-white">Active</span>
       ) : (
         <button
           onClick={() => setEnded(true)}

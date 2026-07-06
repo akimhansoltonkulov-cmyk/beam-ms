@@ -351,7 +351,7 @@ function InstallButton({ ru }: { ru: boolean }) {
         onClick={onClick}
         className="flex w-full items-center gap-4 rounded-card bg-black py-4 px-5 text-left text-white transition active:scale-[0.98]"
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn bg-lime text-black">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn bg-lime text-white">
           <IconDownload size={19} />
         </span>
         <div className="min-w-0 flex-1">

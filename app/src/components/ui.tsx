@@ -117,7 +117,7 @@ export function Pill({
       type="button"
       onClick={onClick}
       className={`focus-lime inline-flex items-center gap-1.5 rounded-pill px-3.5 py-2 text-body-s font-semibold transition-all ${
-        active ? 'bg-lime text-black' : 'bg-grey-soft text-ink hover:bg-[#E9E9E9]'
+        active ? 'bg-lime text-white' : 'bg-grey-soft text-ink hover:bg-[#E9E9E9]'
       } ${className}`}
     >
       {children}
@@ -148,7 +148,7 @@ export function IconButton({
       onClick={onClick}
       style={{ width: size, height: size }}
       className={`focus-lime inline-flex items-center justify-center rounded-full transition-all active:scale-95 ${
-        active ? 'bg-lime text-black' : 'bg-grey-soft text-ink hover:bg-[#E9E9E9]'
+        active ? 'bg-lime text-white' : 'bg-grey-soft text-ink hover:bg-[#E9E9E9]'
       } ${className}`}
     >
       {children}

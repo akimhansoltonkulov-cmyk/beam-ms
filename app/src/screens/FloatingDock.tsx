@@ -66,7 +66,7 @@ function DockBtn({
           transition={{ type: 'spring', stiffness: 350, damping: 28 }}
         />
       )}
-      <span className={`relative z-10 flex items-center justify-center transition-colors duration-200 ${active ? 'text-black' : 'text-ink hover:text-black'}`}>
+      <span className={`relative z-10 flex items-center justify-center transition-colors duration-200 ${active ? 'text-white' : 'text-ink hover:text-black'}`}>
         {children}
       </span>
     </button>

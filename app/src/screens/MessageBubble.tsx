@@ -293,7 +293,7 @@ export default function MessageBubble({
                 key={emoji}
                 onClick={() => react(message.id, emoji)}
                 className={`flex items-center gap-1 rounded-pill px-2 py-0.5 text-body-s font-semibold ${
-                  ids.includes('me') || (meId && ids.includes(meId)) ? 'bg-lime text-black' : 'bg-white text-ink'
+                  ids.includes('me') || (meId && ids.includes(meId)) ? 'bg-lime text-white' : 'bg-white text-ink'
                 }`}
               >
                 <span>{emoji}</span>
@@ -320,7 +320,7 @@ function ActionBtn({
     <button
       title={title}
       onClick={onClick}
-      className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow-card transition hover:bg-lime"
+      className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow-card transition hover:bg-lime hover:text-white"
     >
       {children}
     </button>
@@ -358,7 +358,7 @@ function AttachmentView({ att, mine }: { att: Attachment; mine: boolean }) {
         mine ? 'bg-white/10' : 'bg-grey-soft'
       }`}
     >
-      <div className="flex h-11 w-11 items-center justify-center rounded-btn bg-lime text-black">
+      <div className="flex h-11 w-11 items-center justify-center rounded-btn bg-lime text-white">
         <IconFile size={20} />
       </div>
       <div className="min-w-0 flex-1">
@@ -371,7 +371,7 @@ function AttachmentView({ att, mine }: { att: Attachment; mine: boolean }) {
         target="_blank"
         rel="noreferrer"
         className={`flex h-9 w-9 items-center justify-center rounded-full ${
-          mine ? 'bg-lime text-black' : 'bg-black text-lime'
+          mine ? 'bg-lime text-white' : 'bg-black text-lime'
         } ${!att.url ? 'pointer-events-none opacity-50' : ''}`}
       >
         <IconDownload size={17} />

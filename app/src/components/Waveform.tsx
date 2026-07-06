@@ -78,7 +78,7 @@ export default function Waveform({
       <button
         onClick={toggle}
         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-          active ? 'bg-lime text-black' : 'bg-black text-lime'
+          active ? 'bg-lime text-white' : 'bg-black text-lime'
         }`}
       >
         {playing ? (
