@@ -119,10 +119,35 @@ export interface CallState {
   remoteStream: MediaStream | null
 }
 
+// Persisted session — remembers the device so a returning user skips login.
+const SESSION_KEY = 'beam.session.id'
+const saveSession = (id: string) => {
+  try {
+    localStorage.setItem(SESSION_KEY, id)
+  } catch {
+    /* storage unavailable */
+  }
+}
+const clearSession = () => {
+  try {
+    localStorage.removeItem(SESSION_KEY)
+  } catch {
+    /* noop */
+  }
+}
+const readSession = (): string | null => {
+  try {
+    return localStorage.getItem(SESSION_KEY)
+  } catch {
+    return null
+  }
+}
+
 interface State {
   // session
   authed: boolean
   booting: boolean
+  restoring: boolean
   me: User
 
   // data
@@ -149,6 +174,7 @@ interface State {
   login: (phone: string) => Promise<{ exists: boolean; profile?: User }>
   register: (phone: string, name: string, handle: string, language: string) => Promise<boolean>
   logout: () => void
+  restoreSession: () => Promise<void>
   updateProfile: (updates: {
     name: string
     handle: string
@@ -224,6 +250,7 @@ const sizeOf = (text: string, atts?: Attachment[]) =>
 export const useStore = create<State>((set, get) => ({
   authed: false,
   booting: false,
+  restoring: true,
   me: seedUsers[ME],
 
   users: seedUsers,
@@ -269,6 +296,7 @@ export const useStore = create<State>((set, get) => ({
         // Add profile to local users seed dictionary so avatars render
         const updatedUsers = { ...get().users, [profile.id]: meUser }
         set({ me: meUser, users: updatedUsers, authed: true, booting: false })
+        saveSession(profile.id)
         get()._log({ dir: 'out', op: 'ws.open', bytes: 24, summary: 'Binary WebSocket established', encrypted: true, latencyMs: 41 })
         get()._log({ dir: 'in', op: 'sync.delta', bytes: 512, summary: 'Top-20 chats hydrated (delta)', encrypted: true, latencyMs: 96 })
         get()._startInbox()
@@ -311,6 +339,7 @@ export const useStore = create<State>((set, get) => ({
         }
         const updatedUsers = { ...get().users, [newProfile.id]: meUser }
         set({ me: meUser, users: updatedUsers, authed: true, booting: false })
+        saveSession(newProfile.id)
         get()._log({ dir: 'out', op: 'ws.open', bytes: 24, summary: 'Binary WebSocket established', encrypted: true, latencyMs: 41 })
         get()._log({ dir: 'in', op: 'sync.delta', bytes: 512, summary: 'Registered & Syncing delta', encrypted: true, latencyMs: 96 })
         get()._startInbox()
@@ -346,7 +375,42 @@ export const useStore = create<State>((set, get) => ({
     Object.values(groupSubs).forEach((unsub) => unsub())
     Object.keys(groupSubs).forEach((k) => delete groupSubs[k])
     teardownCallSignaling()
+    clearSession()
     set({ authed: false, activeChatId: null, view: 'chats', call: null })
+  },
+
+  restoreSession: async () => {
+    const id = readSession()
+    if (!id) {
+      set({ restoring: false })
+      return
+    }
+    try {
+      // Wait for the Supabase SDK (loaded via CDN) so a slow load never
+      // wipes a valid saved session.
+      for (let i = 0; i < 30 && !(window as any).supabase; i++) {
+        await new Promise((r) => setTimeout(r, 100))
+      }
+      const profile = await getProfileById(id)
+      if (!profile) {
+        // Could be a transient error or a deleted account — keep the saved id
+        // and just show login; a later reload will retry.
+        set({ restoring: false })
+        return
+      }
+      const meUser = profileToUser(profile)
+      set((s) => ({
+        me: meUser,
+        users: { ...s.users, [profile.id]: meUser },
+        authed: true,
+        restoring: false,
+      }))
+      get()._log({ dir: 'in', op: 'session.restore', bytes: 24, summary: `Device remembered · ${meUser.name}`, encrypted: true, latencyMs: 30 })
+      get()._startInbox()
+    } catch (e) {
+      console.error('restoreSession failed:', e)
+      set({ restoring: false })
+    }
   },
 
   updateProfile: async (updates) => {

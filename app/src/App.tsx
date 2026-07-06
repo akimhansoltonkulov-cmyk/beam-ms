@@ -14,8 +14,15 @@ export default function App() {
   const activeChatId = useStore((s) => s.activeChatId)
   const view = useStore((s) => s.view)
   const call = useStore((s) => s.call)
+  const restoring = useStore((s) => s.restoring)
+  const restoreSession = useStore((s) => s.restoreSession)
   const openChat = useStore((s) => s.openChat)
   const setView = useStore((s) => s.setView)
+
+  // Remember the device — auto-restore a saved session on load.
+  useEffect(() => {
+    restoreSession()
+  }, [restoreSession])
 
   // Global keyboard shortcuts (Functions.pdf §4: Keyboard First)
   useEffect(() => {
@@ -36,7 +43,9 @@ export default function App() {
     // centered like a device on wide screens, edge-to-edge on phones.
     <div className="app-wash flex h-full w-full justify-center sm:py-6">
       <div className="beam-frame relative h-full w-full max-w-[440px] overflow-hidden bg-transparent sm:rounded-[40px]">
-        {!authed ? (
+        {restoring ? (
+          <BootSplash />
+        ) : !authed ? (
           <Login />
         ) : (
           <>
@@ -81,6 +90,18 @@ export default function App() {
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+function BootSplash() {
+  return (
+    <div className="app-wash flex h-full w-full flex-col items-center justify-center gap-5">
+      <div className="relative flex h-20 w-20 items-center justify-center rounded-[26px] bg-black shadow-lift">
+        <span className="text-4xl font-extrabold text-lime">B</span>
+        <span className="absolute inset-0 animate-pulse-ring rounded-[26px] border border-lime/40" />
+      </div>
+      <span className="beam-spin inline-block h-5 w-5 rounded-full border-2 border-black/30 border-t-transparent" />
     </div>
   )
 }
