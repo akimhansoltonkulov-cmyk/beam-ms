@@ -24,6 +24,29 @@
     />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <title>Beam — Instant. Private. Transparent.</title>
+    <script>
+      // Re-assert the light status-bar color at runtime so Chrome versions that
+      // honor dynamic theme-color update the installed-app status bar without a reinstall.
+      (function () {
+        var COLOR = '#e9ebe4'
+        function apply() {
+          var m = document.querySelector('meta[name="theme-color"]')
+          if (!m) {
+            m = document.createElement('meta')
+            m.setAttribute('name', 'theme-color')
+            document.head.appendChild(m)
+          }
+          // toggle to force a change event, then set the real value
+          m.setAttribute('content', '#e9ebe5')
+          requestAnimationFrame(function () { m.setAttribute('content', COLOR) })
+        }
+        apply()
+        document.addEventListener('visibilitychange', function () {
+          if (!document.hidden) apply()
+        })
+        window.addEventListener('pageshow', apply)
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
