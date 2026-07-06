@@ -141,6 +141,11 @@ body {
   background: rgba(56, 58, 64, 0.55);
   border-color: transparent;
 }
+/* Own message bubbles: dark surface with a subtle warm/orange tint (the pale
+   accent tint is unreadable once text turns light in dark mode). */
+.dark .bg-lime-tint {
+  background-color: #3a2417 !important;
+}
 
 @keyframes beam-spin {
   to {
