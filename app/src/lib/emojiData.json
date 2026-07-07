@@ -326,7 +326,7 @@
     "glyph": "✌️",
     "name": "victory hand",
     "group": "People & Body",
-    "file": "270c fe0f.svg"
+    "file": "270c_fe0f.svg"
   },
   {
     "unicode": "1f44b",
@@ -431,14 +431,14 @@
     "glyph": "✍️",
     "name": "writing hand",
     "group": "People & Body",
-    "file": "270d fe0f.svg"
+    "file": "270d_fe0f.svg"
   },
   {
     "unicode": "2764 fe0f",
     "glyph": "❤️",
     "name": "red heart",
     "group": "Smileys & Emotion",
-    "file": "2764 fe0f.svg"
+    "file": "2764_fe0f.svg"
   },
   {
     "unicode": "1f9e1",
@@ -536,7 +536,7 @@
     "glyph": "❣️",
     "name": "heart exclamation",
     "group": "Smileys & Emotion",
-    "file": "2763 fe0f.svg"
+    "file": "2763_fe0f.svg"
   },
   {
     "unicode": "1f436",
@@ -634,7 +634,7 @@
     "glyph": "☀️",
     "name": "sun",
     "group": "Travel & Places",
-    "file": "2600 fe0f.svg"
+    "file": "2600_fe0f.svg"
   },
   {
     "unicode": "2b50",
@@ -823,7 +823,7 @@
     "glyph": "✔️",
     "name": "check mark",
     "group": "Symbols",
-    "file": "2714 fe0f.svg"
+    "file": "2714_fe0f.svg"
   },
   {
     "unicode": "274c",
@@ -879,7 +879,7 @@
     "glyph": "✈️",
     "name": "airplane",
     "group": "Travel & Places",
-    "file": "2708 fe0f.svg"
+    "file": "2708_fe0f.svg"
   },
   {
     "unicode": "1f697",
@@ -907,7 +907,7 @@
     "glyph": "👁️",
     "name": "eye",
     "group": "People & Body",
-    "file": "1f441 fe0f.svg"
+    "file": "1f441_fe0f.svg"
   },
   {
     "unicode": "1f4ac",
@@ -956,6 +956,6 @@
     "glyph": "☝️",
     "name": "index pointing up",
     "group": "People & Body",
-    "file": "261d fe0f.svg"
+    "file": "261d_fe0f.svg"
   }
 ]
