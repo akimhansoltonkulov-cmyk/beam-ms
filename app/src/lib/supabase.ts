@@ -200,6 +200,27 @@ export async function fetchMessages(chatId: string): Promise<DbMessage[]> {
   }
 }
 
+// Distinct DM chat ids the user has ever sent or received a message in —
+// used to rebuild the DM chat list on login (DMs have no membership table).
+export async function fetchMyDmChatIds(userId: string): Promise<string[]> {
+  try {
+    const client = getSupabaseClient()
+    const { data, error } = await client
+      .from('messages')
+      .select('chat_id')
+      .like('chat_id', 'dm:%')
+      .or(`author_id.eq.${userId},recipient_id.eq.${userId}`)
+    if (error) {
+      console.error('Error fetching my DM chats:', error)
+      return []
+    }
+    return Array.from(new Set((data as { chat_id: string }[]).map((r) => r.chat_id)))
+  } catch (err) {
+    console.error('Exception in fetchMyDmChatIds:', err)
+    return []
+  }
+}
+
 export async function insertMessage(row: {
   id: string
   chat_id: string

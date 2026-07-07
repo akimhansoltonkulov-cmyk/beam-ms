@@ -9,6 +9,7 @@ import {
   fetchChatMembers,
   fetchMessages,
   fetchMyChats,
+  fetchMyDmChatIds,
   getProfileByHandle,
   getProfileById,
   getProfileByPhone,
@@ -1007,6 +1008,32 @@ export const useStore = create<State>((set, get) => ({
 
     // Groups & channels — hydrate memberships and keep them live
     get()._startGroups()
+
+    // DMs have no membership table — rebuild the list from message history.
+    fetchMyDmChatIds(meId!).then(async (chatIds) => {
+      for (const chatId of chatIds) {
+        if (get().chats.some((c) => c.id === chatId)) continue
+        const peerId = chatId.slice(3).split('__').find((id) => id !== meId)
+        if (!peerId) continue
+        let peer = get().users[peerId]
+        if (!peer) {
+          const p = await getProfileById(peerId)
+          if (!p) continue
+          peer = profileToUser(p)
+          set((s) => ({ users: { ...s.users, [peerId]: peer! } }))
+        }
+        const chat: Chat = {
+          id: chatId,
+          kind: 'dm',
+          name: peer.name,
+          avatar: '',
+          color: peer.color || '#FF5A1A',
+          members: [meId!, peerId],
+          via: 'Via Beam',
+        }
+        set((s) => (s.chats.some((c) => c.id === chatId) ? s : { chats: [...s.chats, chat] }))
+      }
+    })
 
     // Calls — listen for incoming invites on the personal channel
     initCallSignaling(meId!, {
