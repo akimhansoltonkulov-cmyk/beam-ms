@@ -160,6 +160,15 @@ function createPeer() {
     if (st === 'connected') handlers?.onConnected()
     else if (st === 'failed' || st === 'closed') endCall('failed')
   }
+  // `connectionState` is the modern aggregate signal, but it fires late or
+  // not at all on some mobile browsers/WebViews — `iceConnectionState` is
+  // older but far more consistently reported, so treat either as proof of
+  // a working connection.
+  pc.oniceconnectionstatechange = () => {
+    const st = pc?.iceConnectionState
+    if (st === 'connected' || st === 'completed') handlers?.onConnected()
+    else if (st === 'failed') endCall('failed')
+  }
 
   localStream?.getTracks().forEach((t) => pc!.addTrack(t, localStream!))
 }

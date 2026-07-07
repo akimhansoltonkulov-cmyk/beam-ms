@@ -63,17 +63,15 @@ export default function CallOverlay() {
       exit={{ opacity: 0 }}
       className="absolute inset-0 z-50 flex flex-col items-center justify-between overflow-hidden bg-black text-white sm:rounded-[40px]"
     >
-      {/* Remote video (or backdrop) */}
-      {showRemoteVideo ? (
-        <video
-          ref={remoteRef}
-          autoPlay
-          playsInline
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      ) : (
-        <div className="halftone pointer-events-none absolute inset-0 opacity-[0.08]" />
-      )}
+      {/* Remote media — always mounted so audio plays on voice calls too;
+          only shown full-screen once there's actual video to display. */}
+      <video
+        ref={remoteRef}
+        autoPlay
+        playsInline
+        className={showRemoteVideo ? 'absolute inset-0 h-full w-full object-cover' : 'hidden'}
+      />
+      {!showRemoteVideo && <div className="halftone pointer-events-none absolute inset-0 opacity-[0.08]" />}
 
       {/* Local self-view (video calls only) */}
       {call.video && (

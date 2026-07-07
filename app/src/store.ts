@@ -87,6 +87,15 @@ let membershipUnsub: (() => void) | null = null
 let chatPrefsUnsub: (() => void) | null = null
 const groupSubs: Record<string, () => void> = {}
 
+// Guards _startInbox against running twice for the same session — React 18
+// StrictMode (dev only) double-invokes effects, and login/register/
+// restoreSession can each trigger it. Without this, call signaling ends up
+// with several duplicate personal-channel subscriptions: an incoming call
+// then fires 'invite' multiple times, and the app's own "already active"
+// guard auto-declines every duplicate — so calls ring, then silently die
+// before the callee can even tap Accept.
+let inboxStartedFor: string | null = null
+
 // Pin/archive/block fetched at login, applied to chats as they're hydrated
 // (DM history and group membership load independently, sometimes after
 // this cache is already populated).
@@ -433,6 +442,7 @@ export const useStore = create<State>((set, get) => ({
       chatPrefsUnsub = null
     }
     chatPrefsCache = {}
+    inboxStartedFor = null
     Object.values(groupSubs).forEach((unsub) => unsub())
     Object.keys(groupSubs).forEach((k) => delete groupSubs[k])
     teardownCallSignaling()
@@ -1072,12 +1082,15 @@ export const useStore = create<State>((set, get) => ({
   },
 
   _startInbox: () => {
+    const meId = get().me?.id
+    if (!isRealUserId(meId)) return
+    if (inboxStartedFor === meId) return
+    inboxStartedFor = meId!
+
     if (inboxUnsub) {
       inboxUnsub()
       inboxUnsub = null
     }
-    const meId = get().me?.id
-    if (!isRealUserId(meId)) return
 
     // Pin/archive/block — fetch before hydrating chats so both the DM
     // restore below and _startGroups() can apply flags as they build
