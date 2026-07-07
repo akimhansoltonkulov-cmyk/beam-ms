@@ -80,7 +80,7 @@ export default function ChatWindow() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="glass beam-header-top z-10 flex items-center justify-between border-b border-black/5 px-4 pb-3">
+      <div className="glass beam-header-top relative z-[55] flex items-center justify-between border-b border-black/5 px-4 pb-3">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             onClick={() => openChat(null)}
@@ -143,13 +143,13 @@ export default function ChatWindow() {
           <AnimatePresence>
             {menuOpen && (
               <>
-                <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
+                <div className="fixed inset-0 z-[60]" onClick={() => setMenuOpen(false)} />
                 <motion.div
                   initial={{ opacity: 0, y: -6, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.97 }}
                   transition={{ duration: 0.08 }}
-                  className="absolute right-0 top-12 z-30 w-52 overflow-hidden rounded-ctrl bg-white py-1.5 shadow-card"
+                  className="absolute right-0 top-12 z-[61] w-52 overflow-hidden rounded-ctrl bg-white py-1.5 shadow-card"
                 >
                   {chat.kind === 'dm' && !chat.blocked && (
                     <>

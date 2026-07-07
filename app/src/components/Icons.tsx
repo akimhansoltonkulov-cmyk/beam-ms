@@ -238,10 +238,11 @@ export const IconMicOff = (p: P) => (
     <path d="m3 3 18 18" />
   </svg>
 )
+// Rotated handset, no slash — the universal "hang up" glyph used by every
+// dialer/messenger, clearer at small sizes than a phone-with-strikethrough.
 export const IconPhoneOff = (p: P) => (
-  <svg {...base(p)}>
-    <path d="M10.7 5.1A16 16 0 0 1 21 15v0a2 2 0 0 1-2 2h-2.5l-1-3 2-1.5a11.9 11.9 0 0 0-2-2.2M6.5 8.5A16 16 0 0 0 4 6a2 2 0 0 1 1-2h3l1.4 4" />
-    <path d="m3 3 18 18" />
+  <svg {...base(p)} style={{ transform: 'rotate(135deg)' }}>
+    <path d="M5 4h3l1.5 4.5-2 1.5a12 12 0 0 0 6 6l1.5-2 4.5 1.5V19a2 2 0 0 1-2 2A16 16 0 0 1 4 6a2 2 0 0 1 1-2Z" />
   </svg>
 )
 

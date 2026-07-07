@@ -212,7 +212,7 @@ export default function Login() {
                   <IconBack size={16} /> {t('edit_number')}
                 </button>
                 <label className="mb-2 block text-body-s font-semibold text-grey-mid">
-                  {t('enter_code')} +{phone || '···'}
+                  {t('enter_code')} {selectedCountry.code}{phone || '···'}
                 </label>
                 <div className="flex justify-between gap-3">
                   {code.map((c, i) => (
