@@ -18,19 +18,34 @@ const RTC_CONFIG: RTCConfiguration = {
     { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
     // STUN alone only works when both peers have a NAT that allows direct
     // hole-punching. Mobile/carrier-grade NAT and most corporate networks
-    // block that, so a TURN relay is required for calls to connect at all.
+    // block that, so a TURN relay is required — and when BOTH peers are on
+    // a restrictive network (e.g. two phones on cellular data), both legs
+    // have to go through the relay, so it must actually be reachable on
+    // port 443 (the one port carriers essentially never block, since it
+    // looks like ordinary HTTPS traffic).
+    //
+    // openrelay.metered.ca:443 stopped accepting connections (confirmed —
+    // refuses the TCP handshake outright), which is exactly the port
+    // mobile-to-mobile calls depend on; only its port 80 still answers.
+    // global.relay.metered.ca (same provider, current hostname) answers on
+    // both, so it's listed first.
+    {
+      urls: 'turn:global.relay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:global.relay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:global.relay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
     {
       urls: 'turn:openrelay.metered.ca:80',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
-    {
-      urls: 'turn:openrelay.metered.ca:443',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
-    {
-      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
       username: 'openrelayproject',
       credential: 'openrelayproject',
     },
