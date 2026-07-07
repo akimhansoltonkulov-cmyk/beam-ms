@@ -63,7 +63,9 @@ export default function CallOverlay() {
         : ru ? 'Входящий звонок' : 'Incoming call'
       : call.status === 'outgoing'
         ? ru ? 'Вызываем…' : 'Ringing…'
-        : fmt(elapsed)
+        : call.status === 'connecting'
+          ? ru ? 'Соединение…' : 'Connecting…'
+          : fmt(elapsed)
 
   return (
     <motion.div

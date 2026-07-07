@@ -128,7 +128,7 @@ interface Prefs {
   soundOn: boolean
 }
 
-export type CallStatus = 'idle' | 'outgoing' | 'incoming' | 'active'
+export type CallStatus = 'idle' | 'outgoing' | 'incoming' | 'connecting' | 'active'
 
 export interface CallState {
   status: CallStatus
@@ -560,7 +560,11 @@ export const useStore = create<State>((set, get) => ({
   acceptCall: async () => {
     const call = get().call
     if (!call || call.status !== 'incoming') return
-    set({ call: { ...call, status: 'active', startedAt: Date.now() } })
+    // Not 'active' yet — that's only true once onConnected() fires from a
+    // real ICE/DTLS handshake. Marking it active immediately on tap used to
+    // show a running timer on the callee's screen even when the connection
+    // never actually completed, hiding real failures.
+    set({ call: { ...call, status: 'connecting' } })
     get()._log({ dir: 'out', op: 'call.accept', bytes: 24, summary: `accept ${call.peerName}`, encrypted: true })
     try {
       await rtcAccept()
