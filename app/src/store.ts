@@ -8,6 +8,7 @@ import {
   fetchChatById,
   fetchChatMembers,
   fetchMessages,
+  fetchLastMessages,
   fetchMyChats,
   fetchMyDmChatIds,
   getProfileByHandle,
@@ -965,6 +966,10 @@ export const useStore = create<State>((set, get) => ({
     const rows = await fetchMyChats(meId!)
     rows.forEach(({ chat, members }) => get()._upsertLocalChat(dbToChat(chat, members)))
     rows.forEach(({ chat }) => get()._subscribeGroup(chat.id))
+    // Sidebar previews need at least the latest message per chat.
+    fetchLastMessages(rows.map(({ chat }) => chat.id)).then((msgRows) =>
+      msgRows.forEach((r) => get()._upsertMessage(dbToMessage(r))),
+    )
 
     if (membershipUnsub) {
       membershipUnsub()
@@ -1033,6 +1038,9 @@ export const useStore = create<State>((set, get) => ({
         }
         set((s) => (s.chats.some((c) => c.id === chatId) ? s : { chats: [...s.chats, chat] }))
       }
+      // Sidebar previews need at least the latest message per chat.
+      const rows = await fetchLastMessages(chatIds)
+      rows.forEach((r) => get()._upsertMessage(dbToMessage(r)))
     })
 
     // Calls — listen for incoming invites on the personal channel

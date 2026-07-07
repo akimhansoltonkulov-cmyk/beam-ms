@@ -200,6 +200,36 @@ export async function fetchMessages(chatId: string): Promise<DbMessage[]> {
   }
 }
 
+// Latest message per chat — used to fill sidebar previews right after
+// login/hydration, before any chat has actually been opened.
+export async function fetchLastMessages(chatIds: string[]): Promise<DbMessage[]> {
+  if (!chatIds.length) return []
+  try {
+    const client = getSupabaseClient()
+    const { data, error } = await client
+      .from('messages')
+      .select('*')
+      .in('chat_id', chatIds)
+      .order('created_at', { ascending: false })
+      .limit(Math.max(200, chatIds.length * 5))
+    if (error) {
+      console.error('Error fetching last messages:', error)
+      return []
+    }
+    const seen = new Set<string>()
+    const out: DbMessage[] = []
+    for (const row of (data as DbMessage[]) || []) {
+      if (seen.has(row.chat_id)) continue
+      seen.add(row.chat_id)
+      out.push(row)
+    }
+    return out
+  } catch (err) {
+    console.error('Exception in fetchLastMessages:', err)
+    return []
+  }
+}
+
 // Distinct DM chat ids the user has ever sent or received a message in —
 // used to rebuild the DM chat list on login (DMs have no membership table).
 export async function fetchMyDmChatIds(userId: string): Promise<string[]> {
