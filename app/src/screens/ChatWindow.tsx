@@ -4,6 +4,7 @@ import { useStore } from '../store'
 import { Avatar, IconButton } from '../components/ui'
 import {
   IconBack,
+  IconBlock,
   IconBolt,
   IconClose,
   IconDots,
@@ -34,6 +35,8 @@ export default function ChatWindow() {
   const startCall = useStore((s) => s.startCall)
   const togglePinChat = useStore((s) => s.togglePinChat)
   const archiveChat = useStore((s) => s.archiveChat)
+  const blockChat = useStore((s) => s.blockChat)
+  const unblockChat = useStore((s) => s.unblockChat)
   const deleteChat = useStore((s) => s.deleteChat)
 
   const chat = chats.find((c) => c.id === activeChatId)
@@ -148,7 +151,7 @@ export default function ChatWindow() {
                   transition={{ duration: 0.08 }}
                   className="absolute right-0 top-12 z-30 w-52 overflow-hidden rounded-ctrl bg-white py-1.5 shadow-card"
                 >
-                  {chat.kind === 'dm' && (
+                  {chat.kind === 'dm' && !chat.blocked && (
                     <>
                       <MenuItem
                         onClick={() => {
@@ -204,6 +207,29 @@ export default function ChatWindow() {
                     <IconBolt size={17} />
                     {currentLang === 'ru' ? 'В архив' : 'Archive chat'}
                   </MenuItem>
+                  {chat.kind === 'dm' && (
+                    <MenuItem
+                      danger={!chat.blocked}
+                      onClick={() => {
+                        setMenuOpen(false)
+                        if (chat.blocked) unblockChat(chat.id)
+                        else if (
+                          confirm(
+                            currentLang === 'ru'
+                              ? 'Заблокировать этого пользователя?'
+                              : 'Block this user?',
+                          )
+                        ) {
+                          blockChat(chat.id)
+                        }
+                      }}
+                    >
+                      <IconBlock size={17} />
+                      {chat.blocked
+                        ? currentLang === 'ru' ? 'Разблокировать' : 'Unblock'
+                        : currentLang === 'ru' ? 'Заблокировать' : 'Block user'}
+                    </MenuItem>
+                  )}
                   <MenuItem
                     danger
                     onClick={() => {
@@ -284,7 +310,7 @@ export default function ChatWindow() {
         {/* subtle dotted texture backdrop */}
         <div className="halftone pointer-events-none absolute inset-0 opacity-[0.06]" />
         <div className="relative mx-auto flex max-w-[720px] flex-col gap-[2px] pb-44">
-          <SecurityBanner kind={chat.kind} />
+          {chat.blocked ? <BlockedBanner /> : <SecurityBanner kind={chat.kind} />}
           {groups.map((g) => (
             <div key={g.day} className="flex flex-col gap-[2px]">
               <div className="my-2 flex justify-center">
@@ -311,7 +337,20 @@ export default function ChatWindow() {
       </div>
 
       {/* Composer */}
-      <Composer chatId={chat.id} />
+      {chat.blocked ? (
+        <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-4">
+          <div className="mx-auto max-w-[720px]">
+            <button
+              onClick={() => unblockChat(chat.id)}
+              className="glass w-full rounded-[28px] border border-black/5 py-3.5 text-center text-btn text-[#FF3B30] transition active:scale-[0.98]"
+            >
+              {currentLang === 'ru' ? 'Разблокировать' : 'Unblock'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <Composer chatId={chat.id} />
+      )}
     </div>
   )
 }
@@ -335,6 +374,20 @@ function MenuItem({
     >
       {children}
     </button>
+  )
+}
+
+function BlockedBanner() {
+  const { lang: currentLang } = useTranslation()
+  return (
+    <div className="mx-auto mb-3 flex max-w-[420px] items-center gap-2 rounded-ctrl bg-[#FF3B30]/12 px-4 py-2.5 text-center">
+      <IconBlock size={16} className="shrink-0 text-[#FF3B30]" />
+      <p className="text-body-s text-ink">
+        {currentLang === 'ru'
+          ? 'Пользователь заблокирован. Вы не будете получать от него сообщения, а он не увидит ваши. Разблокируйте, чтобы возобновить переписку.'
+          : "This user is blocked. You won't receive messages from them, and they won't see yours. Unblock to resume the conversation."}
+      </p>
+    </div>
   )
 }
 

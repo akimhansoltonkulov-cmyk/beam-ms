@@ -614,6 +614,94 @@ export function subscribeToGroup(
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Per-user chat preferences (pin / archive / block) — see
+// supabase-chat-prefs.sql. One row per (user, chat); never shared
+// with the other side of a DM.
+// ─────────────────────────────────────────────────────────────
+
+export interface DbChatPref {
+  user_id: string
+  chat_id: string
+  pinned: boolean
+  archived: boolean
+  blocked: boolean
+}
+
+export async function fetchMyChatPrefs(userId: string): Promise<DbChatPref[]> {
+  try {
+    const client = getSupabaseClient()
+    const { data, error } = await client.from('chat_prefs').select('*').eq('user_id', userId)
+    if (error) {
+      console.error('Error fetching chat prefs:', error)
+      return []
+    }
+    return (data as DbChatPref[]) || []
+  } catch (err) {
+    console.error('Exception in fetchMyChatPrefs:', err)
+    return []
+  }
+}
+
+// Always send the full flag set — this replaces the row, so a caller
+// must merge in whatever flags aren't changing.
+export async function upsertChatPref(
+  userId: string,
+  chatId: string,
+  flags: { pinned: boolean; archived: boolean; blocked: boolean },
+): Promise<boolean> {
+  try {
+    const client = getSupabaseClient()
+    const { error } = await client
+      .from('chat_prefs')
+      .upsert(
+        { user_id: userId, chat_id: chatId, ...flags, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id,chat_id' },
+      )
+    if (error) {
+      console.error('Error upserting chat pref:', error)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('Exception in upsertChatPref:', err)
+    return false
+  }
+}
+
+export async function deleteChatPref(userId: string, chatId: string): Promise<void> {
+  try {
+    const client = getSupabaseClient()
+    await client.from('chat_prefs').delete().eq('user_id', userId).eq('chat_id', chatId)
+  } catch (err) {
+    console.error('Exception in deleteChatPref:', err)
+  }
+}
+
+// Live sync: a pin/archive/block on one device reflects on another.
+export function subscribeToMyChatPrefs(
+  userId: string,
+  onChange: (row: DbChatPref) => void,
+): () => void {
+  const client = getSupabaseClient()
+  if (!client.channel) return () => {}
+  const channel = client
+    .channel(`chat-prefs:${userId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'chat_prefs', filter: `user_id=eq.${userId}` },
+      (payload: any) => onChange(payload.new as DbChatPref),
+    )
+    .subscribe()
+  return () => {
+    try {
+      client.removeChannel(channel)
+    } catch {
+      /* noop */
+    }
+  }
+}
+
 export async function registerProfile(profile: Omit<SupabaseProfile, 'id'>): Promise<SupabaseProfile | null> {
   try {
     const client = getSupabaseClient()

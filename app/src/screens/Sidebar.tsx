@@ -19,7 +19,7 @@ export default function Sidebar() {
   const [dirLoading, setDirLoading] = useState(false)
   const [showNewMenu, setShowNewMenu] = useState(false)
   const [createKind, setCreateKind] = useState<'group' | 'channel' | null>(null)
-  const [filter, setFilter] = useState<'all' | 'unread' | 'groups' | 'pinned'>('all')
+  const [filter, setFilter] = useState<'all' | 'unread' | 'groups' | 'pinned' | 'archived'>('all')
 
   const chats = useStore((s) => s.chats)
   const messages = useStore((s) => s.messages)
@@ -49,12 +49,20 @@ export default function Sidebar() {
 
   const togglePinChat = useStore((s) => s.togglePinChat)
   const archiveChat = useStore((s) => s.archiveChat)
+  const unarchiveChat = useStore((s) => s.unarchiveChat)
+  const blockChat = useStore((s) => s.blockChat)
+  const unblockChat = useStore((s) => s.unblockChat)
   const deleteChat = useStore((s) => s.deleteChat)
+
+  const hasArchived = useMemo(() => chats.some((c) => c.archived), [chats])
+  useEffect(() => {
+    if (filter === 'archived' && !hasArchived) setFilter('all')
+  }, [filter, hasArchived])
 
   const q = search.trim().toLowerCase()
   const searching = view === 'search'
   const list = useMemo(() => {
-    let arr = chats.filter((c) => !(c as any).archived)
+    let arr = filter === 'archived' ? chats.filter((c) => c.archived) : chats.filter((c) => !c.archived)
     if (q) {
       arr = arr.filter(
         (c) =>
@@ -121,6 +129,9 @@ export default function Sidebar() {
       onClick={() => openChat(chat.id)}
       togglePinChat={togglePinChat}
       archiveChat={archiveChat}
+      unarchiveChat={unarchiveChat}
+      blockChat={blockChat}
+      unblockChat={unblockChat}
       deleteChat={deleteChat}
     />
   )
@@ -240,6 +251,11 @@ export default function Sidebar() {
           <Pill active={filter === 'unread'} onClick={() => setFilter('unread')}>{t('unread')}</Pill>
           <Pill active={filter === 'groups'} onClick={() => setFilter('groups')}>{t('groups')}</Pill>
           <Pill active={filter === 'pinned'} onClick={() => setFilter('pinned')}>{t('pinned')}</Pill>
+          {hasArchived && (
+            <Pill active={filter === 'archived'} onClick={() => setFilter('archived')}>
+              {lang === 'ru' ? 'Архив' : 'Archive'}
+            </Pill>
+          )}
         </div>
       )}
 
@@ -379,6 +395,9 @@ function ChatCard({
   onClick,
   togglePinChat,
   archiveChat,
+  unarchiveChat,
+  blockChat,
+  unblockChat,
   deleteChat,
 }: {
   chat: Chat
@@ -390,11 +409,14 @@ function ChatCard({
   onClick: () => void
   togglePinChat: (chatId: string) => void
   archiveChat: (chatId: string) => void
+  unarchiveChat: (chatId: string) => void
+  blockChat: (chatId: string) => void
+  unblockChat: (chatId: string) => void
   deleteChat: (chatId: string) => void
 }) {
   const { t, lang: currentLang } = useTranslation()
   const meIdCard = useStore((s) => s.me?.id)
-  const preview = previewText(last, t)
+  const preview = chat.blocked ? (currentLang === 'ru' ? 'Заблокирован' : 'Blocked') : previewText(last, t)
   const mine = last?.authorId === 'me' || last?.authorId === meIdCard
   const [showMenu, setShowMenu] = useState(false)
   const [confirmModal, setConfirmModal] = useState<'block' | 'delete' | null>(null)
@@ -519,11 +541,14 @@ function ChatCard({
             onClick={(e) => {
               e.stopPropagation()
               setShowMenu(false)
-              archiveChat(chat.id)
+              if (chat.archived) unarchiveChat(chat.id)
+              else archiveChat(chat.id)
             }}
             className="flex w-full items-center px-3 py-2 text-body-s font-semibold rounded-ctrl hover:bg-grey-soft transition-colors"
           >
-            {currentLang === 'ru' ? 'В архив' : 'Archive'}
+            {chat.archived
+              ? (currentLang === 'ru' ? 'Разархивировать' : 'Unarchive')
+              : (currentLang === 'ru' ? 'В архив' : 'Archive')}
           </button>
           <button
             onClick={(e) => {
@@ -539,11 +564,14 @@ function ChatCard({
             onClick={(e) => {
               e.stopPropagation()
               setShowMenu(false)
-              setConfirmModal('block')
+              if (chat.blocked) unblockChat(chat.id)
+              else setConfirmModal('block')
             }}
             className="flex w-full items-center px-3 py-2 text-body-s font-semibold rounded-ctrl hover:bg-grey-soft transition-colors text-red-500 hover:text-red-600"
           >
-            {currentLang === 'ru' ? 'Заблокировать' : 'Block'}
+            {chat.blocked
+              ? (currentLang === 'ru' ? 'Разблокировать' : 'Unblock')
+              : (currentLang === 'ru' ? 'Заблокировать' : 'Block')}
           </button>
           <button
             onClick={(e) => {
@@ -589,7 +617,7 @@ function ChatCard({
                 onClick={(e) => {
                   e.stopPropagation()
                   if (confirmModal === 'block') {
-                    alert(currentLang === 'ru' ? 'Пользователь заблокирован' : 'User blocked')
+                    blockChat(chat.id)
                   } else {
                     deleteChat(chat.id)
                   }

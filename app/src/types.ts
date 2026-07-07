@@ -55,6 +55,7 @@ export interface Chat {
   typing?: boolean
   draft?: string
   archived?: boolean
+  blocked?: boolean
 }
 
 // Transparency Console — a live packet in the audit log (Functions.pdf §3)

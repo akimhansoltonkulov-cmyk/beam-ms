@@ -4,11 +4,13 @@ import { ME, cannedReplies, chats as seedChats, messages as seedMessages, users 
 import {
   addChatMembers,
   deleteChatInDb,
+  deleteChatPref,
   dmChatId,
   fetchChatById,
   fetchChatMembers,
   fetchMessages,
   fetchLastMessages,
+  fetchMyChatPrefs,
   fetchMyChats,
   fetchMyDmChatIds,
   getProfileByHandle,
@@ -24,10 +26,13 @@ import {
   subscribeToChat,
   subscribeToGroup,
   subscribeToInbox,
+  subscribeToMyChatPrefs,
   subscribeToMyMemberships,
   updateChatInDb,
   updateProfileInDb,
+  upsertChatPref,
   type DbChat,
+  type DbChatPref,
   type DbMessage,
   type SupabaseProfile,
 } from './lib/supabase'
@@ -79,7 +84,17 @@ let chatUnsub: (() => void) | null = null
 let inboxUnsub: (() => void) | null = null
 let presenceUnsub: (() => void) | null = null
 let membershipUnsub: (() => void) | null = null
+let chatPrefsUnsub: (() => void) | null = null
 const groupSubs: Record<string, () => void> = {}
+
+// Pin/archive/block fetched at login, applied to chats as they're hydrated
+// (DM history and group membership load independently, sometimes after
+// this cache is already populated).
+let chatPrefsCache: Record<string, DbChatPref> = {}
+const withChatPref = (chat: Chat): Chat => {
+  const pref = chatPrefsCache[chat.id]
+  return pref ? { ...chat, pinned: pref.pinned, archived: pref.archived, blocked: pref.blocked } : chat
+}
 
 // Map a Supabase profile row to a local User
 const profileToUser = (p: SupabaseProfile): User => ({
@@ -229,6 +244,9 @@ interface State {
   // chat management
   togglePinChat: (chatId: string) => void
   archiveChat: (chatId: string) => void
+  unarchiveChat: (chatId: string) => void
+  blockChat: (chatId: string) => void
+  unblockChat: (chatId: string) => void
   deleteChat: (chatId: string) => void
 
   // groups & channels
@@ -265,6 +283,7 @@ interface State {
   _startGroups: () => Promise<void>
   _subscribeGroup: (chatId: string) => void
   _upsertLocalChat: (chat: Chat) => void
+  _syncChatPref: (chatId: string, flags: Partial<{ pinned: boolean; archived: boolean; blocked: boolean }>) => void
 }
 
 const isRealUserId = (id?: string) => !!id && id.startsWith('u-')
@@ -409,6 +428,11 @@ export const useStore = create<State>((set, get) => ({
       membershipUnsub()
       membershipUnsub = null
     }
+    if (chatPrefsUnsub) {
+      chatPrefsUnsub()
+      chatPrefsUnsub = null
+    }
+    chatPrefsCache = {}
     Object.values(groupSubs).forEach((unsub) => unsub())
     Object.keys(groupSubs).forEach((k) => delete groupSubs[k])
     teardownCallSignaling()
@@ -634,24 +658,67 @@ export const useStore = create<State>((set, get) => ({
     get().openChat(newChat.id)
   },
 
+  // Persists the full pin/archive/block flag set for one chat — a viewer-only
+  // preference, never shared with the other side of a DM.
+  _syncChatPref: (chatId, flags) => {
+    const meId = get().me?.id
+    if (!isRealUserId(meId)) return
+    const chat = get().chats.find((c) => c.id === chatId)
+    if (!chat) return
+    const merged = {
+      pinned: flags.pinned ?? !!chat.pinned,
+      archived: flags.archived ?? !!chat.archived,
+      blocked: flags.blocked ?? !!chat.blocked,
+    }
+    chatPrefsCache[chatId] = { user_id: meId!, chat_id: chatId, ...merged }
+    upsertChatPref(meId!, chatId, merged)
+  },
+
   togglePinChat: (chatId: string) => {
+    const pinned = !get().chats.find((c) => c.id === chatId)?.pinned
     set((s) => ({
-      chats: s.chats.map((c) => (c.id === chatId ? { ...c, pinned: !c.pinned } : c)),
+      chats: s.chats.map((c) => (c.id === chatId ? { ...c, pinned } : c)),
     }))
+    get()._syncChatPref(chatId, { pinned })
   },
 
   archiveChat: (chatId: string) => {
     set((s) => ({
       chats: s.chats.map((c) => (c.id === chatId ? { ...c, archived: true } : c)),
     }))
+    get()._syncChatPref(chatId, { archived: true })
+  },
+
+  unarchiveChat: (chatId: string) => {
+    set((s) => ({
+      chats: s.chats.map((c) => (c.id === chatId ? { ...c, archived: false } : c)),
+    }))
+    get()._syncChatPref(chatId, { archived: false })
+  },
+
+  blockChat: (chatId: string) => {
+    set((s) => ({
+      chats: s.chats.map((c) => (c.id === chatId ? { ...c, blocked: true } : c)),
+    }))
+    get()._syncChatPref(chatId, { blocked: true })
+  },
+
+  unblockChat: (chatId: string) => {
+    set((s) => ({
+      chats: s.chats.map((c) => (c.id === chatId ? { ...c, blocked: false } : c)),
+    }))
+    get()._syncChatPref(chatId, { blocked: false })
   },
 
   deleteChat: (chatId: string) => {
     const chat = get().chats.find((c) => c.id === chatId)
+    const meId = get().me?.id
     set((s) => ({
       chats: s.chats.filter((c) => c.id !== chatId),
       activeChatId: get().activeChatId === chatId ? null : get().activeChatId,
     }))
+    delete chatPrefsCache[chatId]
+    if (isRealUserId(meId)) deleteChatPref(meId!, chatId)
     // Persisted group/channel → remove server-side (cascade drops memberships).
     if (chat && isRealChatId(chatId) && chat.kind !== 'dm') {
       if (groupSubs[chatId]) {
@@ -768,6 +835,7 @@ export const useStore = create<State>((set, get) => ({
     if (!t && !(attachments && attachments.length)) return
     const meId = get().me?.id || 'me'
     const chat = get().chats.find((c) => c.id === chatId)
+    if (chat?.blocked) return
     const real = !!chat && isRealChatId(chatId)
     const id = uid('m')
     const replyToId = get().replyTo?.id
@@ -964,7 +1032,7 @@ export const useStore = create<State>((set, get) => ({
     if (!isRealUserId(meId)) return
     // Hydrate all my groups/channels and keep them live.
     const rows = await fetchMyChats(meId!)
-    rows.forEach(({ chat, members }) => get()._upsertLocalChat(dbToChat(chat, members)))
+    rows.forEach(({ chat, members }) => get()._upsertLocalChat(withChatPref(dbToChat(chat, members))))
     rows.forEach(({ chat }) => get()._subscribeGroup(chat.id))
     // Sidebar previews need at least the latest message per chat.
     fetchLastMessages(rows.map(({ chat }) => chat.id)).then((msgRows) =>
@@ -986,7 +1054,7 @@ export const useStore = create<State>((set, get) => ({
         const chat = await fetchChatById(chatId)
         if (!chat) return
         const members = await fetchChatMembers(chatId)
-        get()._upsertLocalChat(dbToChat(chat, members))
+        get()._upsertLocalChat(withChatPref(dbToChat(chat, members)))
         get()._subscribeGroup(chatId)
         get()._log({ dir: 'in', op: 'group.join', bytes: 40, summary: `joined ${chat.name}`, encrypted: true })
       },
@@ -1011,6 +1079,32 @@ export const useStore = create<State>((set, get) => ({
     const meId = get().me?.id
     if (!isRealUserId(meId)) return
 
+    // Pin/archive/block — fetch before hydrating chats so both the DM
+    // restore below and _startGroups() can apply flags as they build
+    // each chat entry, and re-apply to whatever's already on screen.
+    fetchMyChatPrefs(meId!).then((prefs) => {
+      chatPrefsCache = Object.fromEntries(prefs.map((p) => [p.chat_id, p]))
+      set((s) => ({
+        chats: s.chats.map((c) => {
+          const pref = chatPrefsCache[c.id]
+          return pref ? { ...c, pinned: pref.pinned, archived: pref.archived, blocked: pref.blocked } : c
+        }),
+      }))
+    })
+
+    if (chatPrefsUnsub) {
+      chatPrefsUnsub()
+      chatPrefsUnsub = null
+    }
+    chatPrefsUnsub = subscribeToMyChatPrefs(meId!, (row) => {
+      chatPrefsCache[row.chat_id] = row
+      set((s) => ({
+        chats: s.chats.map((c) =>
+          c.id === row.chat_id ? { ...c, pinned: row.pinned, archived: row.archived, blocked: row.blocked } : c,
+        ),
+      }))
+    })
+
     // Groups & channels — hydrate memberships and keep them live
     get()._startGroups()
 
@@ -1027,7 +1121,7 @@ export const useStore = create<State>((set, get) => ({
           peer = profileToUser(p)
           set((s) => ({ users: { ...s.users, [peerId]: peer! } }))
         }
-        const chat: Chat = {
+        const chat: Chat = withChatPref({
           id: chatId,
           kind: 'dm',
           name: peer.name,
@@ -1035,7 +1129,7 @@ export const useStore = create<State>((set, get) => ({
           color: peer.color || '#FF5A1A',
           members: [meId!, peerId],
           via: 'Via Beam',
-        }
+        })
         set((s) => (s.chats.some((c) => c.id === chatId) ? s : { chats: [...s.chats, chat] }))
       }
       // Sidebar previews need at least the latest message per chat.
@@ -1101,7 +1195,7 @@ export const useStore = create<State>((set, get) => ({
             set((s) => ({ users: { ...s.users, [p.id]: author! } }))
           }
         }
-        chat = {
+        chat = withChatPref({
           id: msg.chatId,
           kind: 'dm',
           name: author?.name || 'User',
@@ -1109,7 +1203,7 @@ export const useStore = create<State>((set, get) => ({
           color: author?.color || '#FF5A1A',
           members: [meId!, msg.authorId],
           via: 'Via Beam',
-        }
+        })
         set((s) => ({ chats: [...s.chats, chat!] }))
       }
       const status: Message['status'] = get().activeChatId === msg.chatId ? 'read' : 'delivered'

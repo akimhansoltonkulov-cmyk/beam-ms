@@ -60,6 +60,12 @@ export const IconSend = (p: P) => (
     <path d="M4 12 20 4l-6 16-3-7-7-1Z" />
   </svg>
 )
+export const IconBlock = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m5.6 5.6 12.8 12.8" />
+  </svg>
+)
 export const IconSmile = (p: P) => (
   <svg {...base(p)}>
     <circle cx="12" cy="12" r="9" />
