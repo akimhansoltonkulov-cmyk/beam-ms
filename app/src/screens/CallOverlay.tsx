@@ -25,13 +25,22 @@ export default function CallOverlay() {
   const localRef = useRef<HTMLVideoElement>(null)
   const remoteRef = useRef<HTMLVideoElement>(null)
   const [elapsed, setElapsed] = useState(0)
+  const [audioBlocked, setAudioBlocked] = useState(false)
 
   // Attach streams to their <video> elements whenever they change.
   useEffect(() => {
     if (localRef.current && call?.localStream) localRef.current.srcObject = call.localStream
   }, [call?.localStream])
   useEffect(() => {
-    if (remoteRef.current && call?.remoteStream) remoteRef.current.srcObject = call.remoteStream
+    const el = remoteRef.current
+    if (!el || !call?.remoteStream) return
+    el.srcObject = call.remoteStream
+    // Some mobile browsers (Safari especially) won't actually start
+    // playback from a srcObject assigned outside a direct tap handler,
+    // even with the autoplay attribute — silently, with no error anywhere
+    // else. Kick it explicitly and surface a tap-to-unmute affordance if
+    // the browser refuses.
+    el.play().then(() => setAudioBlocked(false)).catch(() => setAudioBlocked(true))
   }, [call?.remoteStream])
 
   // Call timer once connected.
@@ -92,6 +101,14 @@ export default function CallOverlay() {
           <h2 className="text-2xl font-bold">{call.peerName}</h2>
           <p className="mt-1 text-body-s text-white/70">{statusLabel}</p>
         </div>
+        {audioBlocked && call.status === 'active' && (
+          <button
+            onClick={() => remoteRef.current?.play().then(() => setAudioBlocked(false)).catch(() => {})}
+            className="rounded-pill bg-lime px-4 py-2 text-body-s font-bold text-black"
+          >
+            {ru ? '🔊 Включить звук' : '🔊 Tap to enable audio'}
+          </button>
+        )}
       </div>
 
       {/* Temporary on-screen call trace — remove once calls are solid */}
