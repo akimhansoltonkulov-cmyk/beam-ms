@@ -142,6 +142,9 @@ export interface CallState {
   startedAt?: number
   localStream: MediaStream | null
   remoteStream: MediaStream | null
+  // Temporary on-screen trace — see webrtc.ts's onDebug. Remove once
+  // calls are solid.
+  debugLog?: string[]
 }
 
 // Persisted session — remembers the device so a returning user skips login.
@@ -1174,6 +1177,8 @@ export const useStore = create<State>((set, get) => ({
       onRemoteStream: (stream) => set((s) => (s.call ? { call: { ...s.call, remoteStream: stream } } : {})),
       onConnected: () =>
         set((s) => (s.call ? { call: { ...s.call, status: 'active', startedAt: s.call.startedAt ?? Date.now() } } : {})),
+      onDebug: (line) =>
+        set((s) => (s.call ? { call: { ...s.call, debugLog: [...(s.call.debugLog ?? []), line].slice(-14) } } : {})),
       onEnded: (reason) => get()._endCallLocal(reason),
     })
 

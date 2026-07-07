@@ -94,6 +94,15 @@ export default function CallOverlay() {
         </div>
       </div>
 
+      {/* Temporary on-screen call trace — remove once calls are solid */}
+      {!!call.debugLog?.length && (
+        <div className="relative z-10 mx-4 max-h-40 w-[calc(100%-2rem)] overflow-y-auto rounded-ctrl bg-black/60 p-2 font-mono text-[10px] leading-tight text-lime">
+          {call.debugLog.map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
+      )}
+
       {/* Controls */}
       <div className="relative z-10 mb-14 flex items-center gap-5">
         {call.status === 'incoming' ? (
