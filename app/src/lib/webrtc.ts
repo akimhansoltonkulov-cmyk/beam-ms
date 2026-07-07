@@ -60,9 +60,6 @@ export interface CallHandlers {
   onRemoteStream: (stream: MediaStream) => void
   onConnected: () => void
   onEnded: (reason: EndReason) => void
-  // Temporary on-screen trace — lets us see what's happening on a phone
-  // without needing remote devtools. Remove once calls are solid.
-  onDebug?: (line: string) => void
 }
 
 type Signal =
@@ -94,19 +91,13 @@ let isCaller = false
 let wantVideo = false
 let active = false
 
-function dbg(line: string) {
-  handlers?.onDebug?.(line)
-}
-
 // ── signaling helpers ───────────────────────────────────────────
 
 // Fire-and-forget broadcast to another user's personal channel.
 function signalPersonal(toId: string, payload: Signal) {
   if (!supabase.channel) return
-  dbg(`personal out: ${payload.kind}`)
   const ch = supabase.channel(`call:${toId}`)
   ch.subscribe((status: string) => {
-    dbg(`personal ch status: ${status}`)
     if (status === 'SUBSCRIBED') {
       ch.send({ type: 'broadcast', event: 'sig', payload }).finally(() => {
         setTimeout(() => {
@@ -125,15 +116,10 @@ function openRoom(dmId: string) {
   closeRoom()
   roomReady = false
   pendingSends = []
-  dbg(`opening room`)
   roomChannel = supabase.channel(`rtc:${dmId}`)
   roomChannel
-    .on('broadcast', { event: 'sig' }, ({ payload }: { payload: Signal }) => {
-      dbg(`room in: ${payload.kind}`)
-      handleRoomSignal(payload)
-    })
+    .on('broadcast', { event: 'sig' }, ({ payload }: { payload: Signal }) => handleRoomSignal(payload))
     .subscribe((status: string) => {
-      dbg(`room ch status: ${status}`)
       if (status === 'SUBSCRIBED') {
         roomReady = true
         const queued = pendingSends
@@ -161,13 +147,8 @@ function closeRoom() {
 }
 
 function roomSend(payload: Signal) {
-  if (roomReady && roomChannel) {
-    dbg(`room out: ${payload.kind}`)
-    roomChannel.send({ type: 'broadcast', event: 'sig', payload })
-  } else {
-    dbg(`room queued: ${payload.kind}`)
-    pendingSends.push(payload)
-  }
+  if (roomReady && roomChannel) roomChannel.send({ type: 'broadcast', event: 'sig', payload })
+  else pendingSends.push(payload)
 }
 
 // ── media + peer connection ─────────────────────────────────────
@@ -183,17 +164,14 @@ function createPeer() {
   remoteStream = new MediaStream()
 
   pc.ontrack = (e) => {
-    dbg(`ontrack: ${e.track.kind}`)
     e.streams[0]?.getTracks().forEach((t) => remoteStream!.addTrack(t))
     handlers?.onRemoteStream(remoteStream!)
   }
   pc.onicecandidate = (e) => {
     if (e.candidate) roomSend({ kind: 'ice', from: meId!, candidate: e.candidate.toJSON() })
-    else dbg('ice gathering complete')
   }
   pc.onconnectionstatechange = () => {
     const st = pc?.connectionState
-    dbg(`connectionState: ${st}`)
     if (st === 'connected') handlers?.onConnected()
     else if (st === 'failed' || st === 'closed') endCall('failed')
   }
@@ -203,7 +181,6 @@ function createPeer() {
   // a working connection.
   pc.oniceconnectionstatechange = () => {
     const st = pc?.iceConnectionState
-    dbg(`iceConnectionState: ${st}`)
     if (st === 'connected' || st === 'completed') handlers?.onConnected()
     else if (st === 'failed') endCall('failed')
   }
@@ -221,7 +198,6 @@ async function makeOffer() {
 // ── inbound signal routing ──────────────────────────────────────
 
 function handlePersonalSignal(sig: Signal) {
-  dbg(`personal in: ${sig.kind}`)
   switch (sig.kind) {
     case 'invite':
       // Reject a second incoming call while already busy.
@@ -249,7 +225,6 @@ function handlePersonalSignal(sig: Signal) {
 }
 
 async function beginCallerNegotiation() {
-  dbg('beginCallerNegotiation')
   if (!currentDmId) return
   openRoom(currentDmId)
   createPeer()
