@@ -31,7 +31,7 @@ export default function UserProfileModal({ userId, onClose }: { userId: string; 
       initial={{ opacity: 0, x: 24 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 24 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
       className="app-wash absolute inset-0 z-[65] flex flex-col sm:rounded-[40px]"
     >
       {/* Header */}

@@ -145,7 +145,7 @@ export default function ChatWindow() {
                   initial={{ opacity: 0, y: -6, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                  transition={{ duration: 0.14 }}
+                  transition={{ duration: 0.08 }}
                   className="absolute right-0 top-12 z-30 w-52 overflow-hidden rounded-ctrl bg-white py-1.5 shadow-card"
                 >
                   {chat.kind === 'dm' && (

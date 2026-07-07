@@ -458,7 +458,7 @@ function FieldSheet({
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
-        transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
         className="relative w-full max-w-[440px] rounded-t-[28px] bg-white p-5 pb-7 shadow-lift"
         onClick={(e) => e.stopPropagation()}
       >

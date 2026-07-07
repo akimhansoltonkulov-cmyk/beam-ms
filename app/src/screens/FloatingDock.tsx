@@ -28,7 +28,7 @@ export default function FloatingDock() {
       <motion.div
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 24, delay: 0.15 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 30 }}
         className="beam-dock pointer-events-auto flex items-center gap-2 rounded-pill p-2 shadow-dock"
       >
         {items.map((it) => (
@@ -63,7 +63,7 @@ function DockBtn({
         <motion.div
           layoutId="active-dock-tab"
           className="absolute inset-0 rounded-full bg-lime shadow-sm"
-          transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 32 }}
         />
       )}
       <span className={`relative z-10 flex items-center justify-center transition-colors duration-200 ${active ? 'text-white' : 'text-ink hover:text-black'}`}>

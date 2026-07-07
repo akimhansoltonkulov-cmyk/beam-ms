@@ -135,7 +135,7 @@ export default function Login() {
                 initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: 0.25 }}
+                transition={{ duration: 0.13 }}
               >
                 <label className="mb-2 block text-body-s font-semibold text-grey-mid">{t('phone_number')}</label>
                 <div className="relative flex items-center gap-2 rounded-ctrl bg-grey-soft px-4 py-3.5">
@@ -203,7 +203,7 @@ export default function Login() {
                 initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: 0.25 }}
+                transition={{ duration: 0.13 }}
               >
                 <button
                   onClick={() => setStep('phone')}
@@ -255,7 +255,7 @@ export default function Login() {
                 initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: 0.25 }}
+                transition={{ duration: 0.13 }}
                 className="space-y-3.5"
               >
                 <div>

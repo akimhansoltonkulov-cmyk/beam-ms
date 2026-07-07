@@ -109,7 +109,7 @@ export default function Sidebar() {
       .reverse()
   }, [messages, q])
 
-  const renderChatCard = (chat: Chat, i: number) => (
+  const renderChatCard = (chat: Chat) => (
     <ChatCard
       key={chat.id}
       chat={chat}
@@ -118,7 +118,6 @@ export default function Sidebar() {
       active={chat.id === activeChatId}
       authorName={lastByChat[chat.id] ? users[lastByChat[chat.id]!.authorId]?.name?.split(' ')[0] || '' : ''}
       online={chat.kind === 'dm' ? online[chat.members.find((m) => m !== 'me' && m !== meId)!] : undefined}
-      index={i}
       onClick={() => openChat(chat.id)}
       togglePinChat={togglePinChat}
       archiveChat={archiveChat}
@@ -180,7 +179,7 @@ export default function Sidebar() {
                   initial={{ opacity: 0, y: -6, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                  transition={{ duration: 0.14 }}
+                  transition={{ duration: 0.08 }}
                   className="absolute right-0 top-12 z-30 w-56 overflow-hidden rounded-ctrl bg-white py-1.5 shadow-lift"
                 >
                   <NewMenuItem
@@ -340,7 +339,7 @@ export default function Sidebar() {
             {list.length > 0 && (
               <>
                 {sectionLabel(t('chats'))}
-                {list.map((chat, i) => renderChatCard(chat, i))}
+                {list.map((chat) => renderChatCard(chat))}
               </>
             )}
 
@@ -359,7 +358,7 @@ export default function Sidebar() {
           </>
         ) : (
           <>
-            {list.map((chat, i) => renderChatCard(chat, i))}
+            {list.map((chat) => renderChatCard(chat))}
             {list.length === 0 && (
               <div className="mt-10 text-center text-body-s text-grey-mid">{t('no_results')}</div>
             )}
@@ -377,7 +376,6 @@ function ChatCard({
   active,
   authorName,
   online,
-  index,
   onClick,
   togglePinChat,
   archiveChat,
@@ -389,7 +387,6 @@ function ChatCard({
   active: boolean
   authorName?: string
   online?: boolean
-  index: number
   onClick: () => void
   togglePinChat: (chatId: string) => void
   archiveChat: (chatId: string) => void
@@ -438,7 +435,7 @@ function ChatCard({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.03, 0.3), duration: 0.25 }}
+      transition={{ duration: 0.12 }}
       onClick={(e) => {
         if (showMenu) {
           e.preventDefault()
@@ -567,7 +564,7 @@ function ChatCard({
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.11, ease: [0.16, 1, 0.3, 1] }}
             className="w-[310px] overflow-hidden rounded-card bg-white p-7 text-black shadow-lift border border-black/5"
             onClick={(e) => e.stopPropagation()}
           >

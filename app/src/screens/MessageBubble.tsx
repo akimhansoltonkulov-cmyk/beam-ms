@@ -131,7 +131,7 @@ export default function MessageBubble({
           <motion.div
             initial={{ opacity: 0, scale: 0.96, y: 4 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
             className={`relative overflow-hidden px-3.5 py-2 shadow-card ${
               showActions ? 'z-50' : 'z-10'
             } ${
@@ -223,7 +223,7 @@ export default function MessageBubble({
                 initial={{ opacity: 0, scale: 0.9, y: 6 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.15 }}
+                transition={{ duration: 0.08 }}
                 className={`absolute -top-[48px] z-50 flex items-center gap-1.5 ${mine ? 'right-0' : 'left-0'}`}
                 onClick={(e) => e.stopPropagation()}
               >
