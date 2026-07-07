@@ -281,7 +281,7 @@ export const useStore = create<State>((set, get) => ({
   users: seedUsers,
   chats: seedChats,
   messages: seedMessages,
-  online: { anna: true, marcus: true, lena: false, omar: true },
+  online: {},
 
   view: 'chats',
   activeChatId: null,
@@ -422,11 +422,6 @@ export const useStore = create<State>((set, get) => ({
       return
     }
     try {
-      // Wait for the Supabase SDK (loaded via CDN) so a slow load never
-      // wipes a valid saved session.
-      for (let i = 0; i < 30 && !(window as any).supabase; i++) {
-        await new Promise((r) => setTimeout(r, 100))
-      }
       const profile = await getProfileById(id)
       if (!profile) {
         // Could be a transient error or a deleted account — keep the saved id

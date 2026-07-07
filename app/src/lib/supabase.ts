@@ -1,32 +1,13 @@
+import { createClient } from '@supabase/supabase-js'
+
 const supabaseUrl = 'https://qhypyajfbflrqfqanpvm.supabase.co'
 const supabaseKey = 'sb_publishable_77jrZ18YRDbc6eDuriKe-A_t-FHSzJ8'
 
-let supabaseInstance: any = null
+export const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Use the CDN-provided global variable
-const getSupabaseClient = () => {
-  const globalSupabase = (window as any).supabase
-  if (!globalSupabase) {
-    console.warn('Supabase SDK not loaded yet. Using mock client.')
-    return {
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            single: () => Promise.resolve({ data: null, error: new Error('Mock client') }),
-            maybeSingle: () => Promise.resolve({ data: null, error: null })
-          })
-        }),
-        insert: () => Promise.resolve({ data: null, error: new Error('Mock client') })
-      })
-    }
-  }
-  if (!supabaseInstance) {
-    supabaseInstance = globalSupabase.createClient(supabaseUrl, supabaseKey)
-  }
-  return supabaseInstance
-}
-
-export const supabase = getSupabaseClient()
+// Bundled as a real npm dependency now, so the client is always available —
+// no CDN race, no silent mock fallback.
+const getSupabaseClient = () => supabase
 
 export interface SupabaseProfile {
   id: string
