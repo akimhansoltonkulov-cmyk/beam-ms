@@ -30,6 +30,9 @@ create policy "messages_insert" on public.messages for insert with check (true);
 drop policy if exists "messages_update" on public.messages;
 create policy "messages_update" on public.messages for update using (true);
 
+drop policy if exists "messages_delete" on public.messages;
+create policy "messages_delete" on public.messages for delete using (true);
+
 -- Enable Realtime broadcast of row changes for this table.
 alter table public.messages replica identity full;
 do $$

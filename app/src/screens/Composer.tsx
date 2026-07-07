@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../store'
-import { IconClose, IconMic, IconPaperclip, IconPlus, IconReply, IconSend } from '../components/Icons'
+import { IconClose, IconMic, IconPaperclip, IconPlus, IconReply, IconSend, IconSmile } from '../components/Icons'
 import { secs } from '../lib/format'
 import type { Attachment } from '../types'
 import { useTranslation } from '../lib/i18n'
 import { uploadMedia } from '../lib/supabase'
+import EmojiPicker from './EmojiPicker'
 
 let ac = 0
 
@@ -22,6 +23,7 @@ export default function Composer({ chatId }: { chatId: string }) {
   const [text, setText] = useState(draft)
   const [atts, setAtts] = useState<Attachment[]>([])
   const [dragOver, setDragOver] = useState(false)
+  const [showEmoji, setShowEmoji] = useState(false)
   const [recording, setRecording] = useState(false)
   const [recSecs, setRecSecs] = useState(0)
   const [cancelling, setCancelling] = useState(false)
@@ -41,6 +43,7 @@ export default function Composer({ chatId }: { chatId: string }) {
   useEffect(() => {
     setText(chats.find((c) => c.id === chatId)?.draft ?? '')
     setAtts([])
+    setShowEmoji(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId])
 
@@ -61,6 +64,20 @@ export default function Composer({ chatId }: { chatId: string }) {
     setText('')
     setAtts([])
     setDraft(chatId, '')
+  }
+
+  const insertEmoji = (glyph: string) => {
+    const ta = taRef.current
+    const start = ta?.selectionStart ?? text.length
+    const end = ta?.selectionEnd ?? text.length
+    const next = text.slice(0, start) + glyph + text.slice(end)
+    setText(next)
+    setDraft(chatId, next)
+    requestAnimationFrame(() => {
+      ta?.focus()
+      const pos = start + glyph.length
+      ta?.setSelectionRange(pos, pos)
+    })
   }
 
   const addFiles = (files: FileList | null) => {
@@ -243,6 +260,24 @@ export default function Composer({ chatId }: { chatId: string }) {
           )}
         </AnimatePresence>
 
+        {/* Emoji picker */}
+        <AnimatePresence>
+          {showEmoji && (
+            <>
+              <div className="fixed inset-0 z-20" onClick={() => setShowEmoji(false)} />
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.12 }}
+                className="relative z-30"
+              >
+                <EmojiPicker onSelect={insertEmoji} />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
         {/* main bar */}
         {recording ? (
           <div
@@ -289,6 +324,15 @@ export default function Composer({ chatId }: { chatId: string }) {
               title={currentLang === 'ru' ? 'Прикрепить файл' : 'Attach file'}
             >
               <IconPlus size={22} />
+            </button>
+            <button
+              onClick={() => setShowEmoji((v) => !v)}
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition ${
+                showEmoji ? 'bg-lime text-black' : 'bg-grey-soft text-ink hover:bg-[#e6e6e6]'
+              }`}
+              title={currentLang === 'ru' ? 'Эмодзи' : 'Emoji'}
+            >
+              <IconSmile size={22} />
             </button>
             <textarea
               ref={taRef}

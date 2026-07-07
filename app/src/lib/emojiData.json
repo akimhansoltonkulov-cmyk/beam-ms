@@ -1,0 +1,961 @@
+[
+  {
+    "unicode": "1f600",
+    "glyph": "😀",
+    "name": "grinning face",
+    "group": "Smileys & Emotion",
+    "file": "1f600.svg"
+  },
+  {
+    "unicode": "1f601",
+    "glyph": "😁",
+    "name": "beaming face with smiling eyes",
+    "group": "Smileys & Emotion",
+    "file": "1f601.svg"
+  },
+  {
+    "unicode": "1f602",
+    "glyph": "😂",
+    "name": "face with tears of joy",
+    "group": "Smileys & Emotion",
+    "file": "1f602.svg"
+  },
+  {
+    "unicode": "1f923",
+    "glyph": "🤣",
+    "name": "rolling on the floor laughing",
+    "group": "Smileys & Emotion",
+    "file": "1f923.svg"
+  },
+  {
+    "unicode": "1f605",
+    "glyph": "😅",
+    "name": "grinning face with sweat",
+    "group": "Smileys & Emotion",
+    "file": "1f605.svg"
+  },
+  {
+    "unicode": "1f60d",
+    "glyph": "😍",
+    "name": "smiling face with heart-eyes",
+    "group": "Smileys & Emotion",
+    "file": "1f60d.svg"
+  },
+  {
+    "unicode": "1f618",
+    "glyph": "😘",
+    "name": "face blowing a kiss",
+    "group": "Smileys & Emotion",
+    "file": "1f618.svg"
+  },
+  {
+    "unicode": "1f60a",
+    "glyph": "😊",
+    "name": "smiling face with smiling eyes",
+    "group": "Smileys & Emotion",
+    "file": "1f60a.svg"
+  },
+  {
+    "unicode": "1f609",
+    "glyph": "😉",
+    "name": "winking face",
+    "group": "Smileys & Emotion",
+    "file": "1f609.svg"
+  },
+  {
+    "unicode": "1f60e",
+    "glyph": "😎",
+    "name": "smiling face with sunglasses",
+    "group": "Smileys & Emotion",
+    "file": "1f60e.svg"
+  },
+  {
+    "unicode": "1f914",
+    "glyph": "🤔",
+    "name": "thinking face",
+    "group": "Smileys & Emotion",
+    "file": "1f914.svg"
+  },
+  {
+    "unicode": "1f610",
+    "glyph": "😐",
+    "name": "neutral face",
+    "group": "Smileys & Emotion",
+    "file": "1f610.svg"
+  },
+  {
+    "unicode": "1f644",
+    "glyph": "🙄",
+    "name": "face with rolling eyes",
+    "group": "Smileys & Emotion",
+    "file": "1f644.svg"
+  },
+  {
+    "unicode": "1f62d",
+    "glyph": "😭",
+    "name": "loudly crying face",
+    "group": "Smileys & Emotion",
+    "file": "1f62d.svg"
+  },
+  {
+    "unicode": "1f631",
+    "glyph": "😱",
+    "name": "face screaming in fear",
+    "group": "Smileys & Emotion",
+    "file": "1f631.svg"
+  },
+  {
+    "unicode": "1f632",
+    "glyph": "😲",
+    "name": "astonished face",
+    "group": "Smileys & Emotion",
+    "file": "1f632.svg"
+  },
+  {
+    "unicode": "1f620",
+    "glyph": "😠",
+    "name": "angry face",
+    "group": "Smileys & Emotion",
+    "file": "1f620.svg"
+  },
+  {
+    "unicode": "1f621",
+    "glyph": "😡",
+    "name": "pouting face",
+    "group": "Smileys & Emotion",
+    "file": "1f621.svg"
+  },
+  {
+    "unicode": "1f634",
+    "glyph": "😴",
+    "name": "sleeping face",
+    "group": "Smileys & Emotion",
+    "file": "1f634.svg"
+  },
+  {
+    "unicode": "1f637",
+    "glyph": "😷",
+    "name": "face with medical mask",
+    "group": "Smileys & Emotion",
+    "file": "1f637.svg"
+  },
+  {
+    "unicode": "1f922",
+    "glyph": "🤢",
+    "name": "nauseated face",
+    "group": "Smileys & Emotion",
+    "file": "1f922.svg"
+  },
+  {
+    "unicode": "1f975",
+    "glyph": "🥵",
+    "name": "hot face",
+    "group": "Smileys & Emotion",
+    "file": "1f975.svg"
+  },
+  {
+    "unicode": "1f976",
+    "glyph": "🥶",
+    "name": "cold face",
+    "group": "Smileys & Emotion",
+    "file": "1f976.svg"
+  },
+  {
+    "unicode": "1f607",
+    "glyph": "😇",
+    "name": "smiling face with halo",
+    "group": "Smileys & Emotion",
+    "file": "1f607.svg"
+  },
+  {
+    "unicode": "1f929",
+    "glyph": "🤩",
+    "name": "star-struck",
+    "group": "Smileys & Emotion",
+    "file": "1f929.svg"
+  },
+  {
+    "unicode": "1f92f",
+    "glyph": "🤯",
+    "name": "exploding head",
+    "group": "Smileys & Emotion",
+    "file": "1f92f.svg"
+  },
+  {
+    "unicode": "1f92d",
+    "glyph": "🤭",
+    "name": "face with hand over mouth",
+    "group": "Smileys & Emotion",
+    "file": "1f92d.svg"
+  },
+  {
+    "unicode": "1f9d0",
+    "glyph": "🧐",
+    "name": "face with monocle",
+    "group": "Smileys & Emotion",
+    "file": "1f9d0.svg"
+  },
+  {
+    "unicode": "1f913",
+    "glyph": "🤓",
+    "name": "nerd face",
+    "group": "Smileys & Emotion",
+    "file": "1f913.svg"
+  },
+  {
+    "unicode": "1f972",
+    "glyph": "🥲",
+    "name": "smiling face with tear",
+    "group": "Smileys & Emotion",
+    "file": "1f972.svg"
+  },
+  {
+    "unicode": "1f97a",
+    "glyph": "🥺",
+    "name": "pleading face",
+    "group": "Smileys & Emotion",
+    "file": "1f97a.svg"
+  },
+  {
+    "unicode": "1f61a",
+    "glyph": "😚",
+    "name": "kissing face with closed eyes",
+    "group": "Smileys & Emotion",
+    "file": "1f61a.svg"
+  },
+  {
+    "unicode": "1f60c",
+    "glyph": "😌",
+    "name": "relieved face",
+    "group": "Smileys & Emotion",
+    "file": "1f60c.svg"
+  },
+  {
+    "unicode": "1f615",
+    "glyph": "😕",
+    "name": "confused face",
+    "group": "Smileys & Emotion",
+    "file": "1f615.svg"
+  },
+  {
+    "unicode": "1f61f",
+    "glyph": "😟",
+    "name": "worried face",
+    "group": "Smileys & Emotion",
+    "file": "1f61f.svg"
+  },
+  {
+    "unicode": "1f633",
+    "glyph": "😳",
+    "name": "flushed face",
+    "group": "Smileys & Emotion",
+    "file": "1f633.svg"
+  },
+  {
+    "unicode": "1f624",
+    "glyph": "😤",
+    "name": "face with steam from nose",
+    "group": "Smileys & Emotion",
+    "file": "1f624.svg"
+  },
+  {
+    "unicode": "1f480",
+    "glyph": "💀",
+    "name": "skull",
+    "group": "Smileys & Emotion",
+    "file": "1f480.svg"
+  },
+  {
+    "unicode": "1f921",
+    "glyph": "🤡",
+    "name": "clown face",
+    "group": "Smileys & Emotion",
+    "file": "1f921.svg"
+  },
+  {
+    "unicode": "1f47b",
+    "glyph": "👻",
+    "name": "ghost",
+    "group": "Smileys & Emotion",
+    "file": "1f47b.svg"
+  },
+  {
+    "unicode": "1f479",
+    "glyph": "👹",
+    "name": "ogre",
+    "group": "Smileys & Emotion",
+    "file": "1f479.svg"
+  },
+  {
+    "unicode": "1f47d",
+    "glyph": "👽",
+    "name": "alien",
+    "group": "Smileys & Emotion",
+    "file": "1f47d.svg"
+  },
+  {
+    "unicode": "1f916",
+    "glyph": "🤖",
+    "name": "robot",
+    "group": "Smileys & Emotion",
+    "file": "1f916.svg"
+  },
+  {
+    "unicode": "1f44d",
+    "glyph": "👍",
+    "name": "thumbs up",
+    "group": "People & Body",
+    "file": "1f44d.svg"
+  },
+  {
+    "unicode": "1f44e",
+    "glyph": "👎",
+    "name": "thumbs down",
+    "group": "People & Body",
+    "file": "1f44e.svg"
+  },
+  {
+    "unicode": "1f44c",
+    "glyph": "👌",
+    "name": "OK hand",
+    "group": "People & Body",
+    "file": "1f44c.svg"
+  },
+  {
+    "unicode": "270c fe0f",
+    "glyph": "✌️",
+    "name": "victory hand",
+    "group": "People & Body",
+    "file": "270c fe0f.svg"
+  },
+  {
+    "unicode": "1f44b",
+    "glyph": "👋",
+    "name": "waving hand",
+    "group": "People & Body",
+    "file": "1f44b.svg"
+  },
+  {
+    "unicode": "1f44f",
+    "glyph": "👏",
+    "name": "clapping hands",
+    "group": "People & Body",
+    "file": "1f44f.svg"
+  },
+  {
+    "unicode": "1f64f",
+    "glyph": "🙏",
+    "name": "folded hands",
+    "group": "People & Body",
+    "file": "1f64f.svg"
+  },
+  {
+    "unicode": "1f64c",
+    "glyph": "🙌",
+    "name": "raising hands",
+    "group": "People & Body",
+    "file": "1f64c.svg"
+  },
+  {
+    "unicode": "1f4aa",
+    "glyph": "💪",
+    "name": "flexed biceps",
+    "group": "People & Body",
+    "file": "1f4aa.svg"
+  },
+  {
+    "unicode": "1f91e",
+    "glyph": "🤞",
+    "name": "crossed fingers",
+    "group": "People & Body",
+    "file": "1f91e.svg"
+  },
+  {
+    "unicode": "1f91d",
+    "glyph": "🤝",
+    "name": "handshake",
+    "group": "People & Body",
+    "file": "1f91d.svg"
+  },
+  {
+    "unicode": "1f450",
+    "glyph": "👐",
+    "name": "open hands",
+    "group": "People & Body",
+    "file": "1f450.svg"
+  },
+  {
+    "unicode": "270a",
+    "glyph": "✊",
+    "name": "raised fist",
+    "group": "People & Body",
+    "file": "270a.svg"
+  },
+  {
+    "unicode": "270b",
+    "glyph": "✋",
+    "name": "raised hand",
+    "group": "People & Body",
+    "file": "270b.svg"
+  },
+  {
+    "unicode": "1f919",
+    "glyph": "🤙",
+    "name": "call me hand",
+    "group": "People & Body",
+    "file": "1f919.svg"
+  },
+  {
+    "unicode": "1f91f",
+    "glyph": "🤟",
+    "name": "love-you gesture",
+    "group": "People & Body",
+    "file": "1f91f.svg"
+  },
+  {
+    "unicode": "1f918",
+    "glyph": "🤘",
+    "name": "sign of the horns",
+    "group": "People & Body",
+    "file": "1f918.svg"
+  },
+  {
+    "unicode": "1f90f",
+    "glyph": "🤏",
+    "name": "pinching hand",
+    "group": "People & Body",
+    "file": "1f90f.svg"
+  },
+  {
+    "unicode": "270d fe0f",
+    "glyph": "✍️",
+    "name": "writing hand",
+    "group": "People & Body",
+    "file": "270d fe0f.svg"
+  },
+  {
+    "unicode": "2764 fe0f",
+    "glyph": "❤️",
+    "name": "red heart",
+    "group": "Smileys & Emotion",
+    "file": "2764 fe0f.svg"
+  },
+  {
+    "unicode": "1f9e1",
+    "glyph": "🧡",
+    "name": "orange heart",
+    "group": "Smileys & Emotion",
+    "file": "1f9e1.svg"
+  },
+  {
+    "unicode": "1f49b",
+    "glyph": "💛",
+    "name": "yellow heart",
+    "group": "Smileys & Emotion",
+    "file": "1f49b.svg"
+  },
+  {
+    "unicode": "1f49a",
+    "glyph": "💚",
+    "name": "green heart",
+    "group": "Smileys & Emotion",
+    "file": "1f49a.svg"
+  },
+  {
+    "unicode": "1f499",
+    "glyph": "💙",
+    "name": "blue heart",
+    "group": "Smileys & Emotion",
+    "file": "1f499.svg"
+  },
+  {
+    "unicode": "1f49c",
+    "glyph": "💜",
+    "name": "purple heart",
+    "group": "Smileys & Emotion",
+    "file": "1f49c.svg"
+  },
+  {
+    "unicode": "1f5a4",
+    "glyph": "🖤",
+    "name": "black heart",
+    "group": "Smileys & Emotion",
+    "file": "1f5a4.svg"
+  },
+  {
+    "unicode": "1f90d",
+    "glyph": "🤍",
+    "name": "white heart",
+    "group": "Smileys & Emotion",
+    "file": "1f90d.svg"
+  },
+  {
+    "unicode": "1f494",
+    "glyph": "💔",
+    "name": "broken heart",
+    "group": "Smileys & Emotion",
+    "file": "1f494.svg"
+  },
+  {
+    "unicode": "1f495",
+    "glyph": "💕",
+    "name": "two hearts",
+    "group": "Smileys & Emotion",
+    "file": "1f495.svg"
+  },
+  {
+    "unicode": "1f496",
+    "glyph": "💖",
+    "name": "sparkling heart",
+    "group": "Smileys & Emotion",
+    "file": "1f496.svg"
+  },
+  {
+    "unicode": "1f498",
+    "glyph": "💘",
+    "name": "heart with arrow",
+    "group": "Smileys & Emotion",
+    "file": "1f498.svg"
+  },
+  {
+    "unicode": "1f493",
+    "glyph": "💓",
+    "name": "beating heart",
+    "group": "Smileys & Emotion",
+    "file": "1f493.svg"
+  },
+  {
+    "unicode": "1f49e",
+    "glyph": "💞",
+    "name": "revolving hearts",
+    "group": "Smileys & Emotion",
+    "file": "1f49e.svg"
+  },
+  {
+    "unicode": "2763 fe0f",
+    "glyph": "❣️",
+    "name": "heart exclamation",
+    "group": "Smileys & Emotion",
+    "file": "2763 fe0f.svg"
+  },
+  {
+    "unicode": "1f436",
+    "glyph": "🐶",
+    "name": "dog face",
+    "group": "Animals & Nature",
+    "file": "1f436.svg"
+  },
+  {
+    "unicode": "1f431",
+    "glyph": "🐱",
+    "name": "cat face",
+    "group": "Animals & Nature",
+    "file": "1f431.svg"
+  },
+  {
+    "unicode": "1f98a",
+    "glyph": "🦊",
+    "name": "fox",
+    "group": "Animals & Nature",
+    "file": "1f98a.svg"
+  },
+  {
+    "unicode": "1f43b",
+    "glyph": "🐻",
+    "name": "bear",
+    "group": "Animals & Nature",
+    "file": "1f43b.svg"
+  },
+  {
+    "unicode": "1f43c",
+    "glyph": "🐼",
+    "name": "panda",
+    "group": "Animals & Nature",
+    "file": "1f43c.svg"
+  },
+  {
+    "unicode": "1f981",
+    "glyph": "🦁",
+    "name": "lion",
+    "group": "Animals & Nature",
+    "file": "1f981.svg"
+  },
+  {
+    "unicode": "1f42f",
+    "glyph": "🐯",
+    "name": "tiger face",
+    "group": "Animals & Nature",
+    "file": "1f42f.svg"
+  },
+  {
+    "unicode": "1f984",
+    "glyph": "🦄",
+    "name": "unicorn",
+    "group": "Animals & Nature",
+    "file": "1f984.svg"
+  },
+  {
+    "unicode": "1f435",
+    "glyph": "🐵",
+    "name": "monkey face",
+    "group": "Animals & Nature",
+    "file": "1f435.svg"
+  },
+  {
+    "unicode": "1f414",
+    "glyph": "🐔",
+    "name": "chicken",
+    "group": "Animals & Nature",
+    "file": "1f414.svg"
+  },
+  {
+    "unicode": "1f427",
+    "glyph": "🐧",
+    "name": "penguin",
+    "group": "Animals & Nature",
+    "file": "1f427.svg"
+  },
+  {
+    "unicode": "1f430",
+    "glyph": "🐰",
+    "name": "rabbit face",
+    "group": "Animals & Nature",
+    "file": "1f430.svg"
+  },
+  {
+    "unicode": "1f525",
+    "glyph": "🔥",
+    "name": "fire",
+    "group": "Travel & Places",
+    "file": "1f525.svg"
+  },
+  {
+    "unicode": "2600 fe0f",
+    "glyph": "☀️",
+    "name": "sun",
+    "group": "Travel & Places",
+    "file": "2600 fe0f.svg"
+  },
+  {
+    "unicode": "2b50",
+    "glyph": "⭐",
+    "name": "star",
+    "group": "Travel & Places",
+    "file": "2b50.svg"
+  },
+  {
+    "unicode": "2728",
+    "glyph": "✨",
+    "name": "sparkles",
+    "group": "Activities",
+    "file": "2728.svg"
+  },
+  {
+    "unicode": "1f308",
+    "glyph": "🌈",
+    "name": "rainbow",
+    "group": "Travel & Places",
+    "file": "1f308.svg"
+  },
+  {
+    "unicode": "1f31d",
+    "glyph": "🌝",
+    "name": "full moon face",
+    "group": "Travel & Places",
+    "file": "1f31d.svg"
+  },
+  {
+    "unicode": "1f34e",
+    "glyph": "🍎",
+    "name": "red apple",
+    "group": "Food & Drink",
+    "file": "1f34e.svg"
+  },
+  {
+    "unicode": "1f355",
+    "glyph": "🍕",
+    "name": "pizza",
+    "group": "Food & Drink",
+    "file": "1f355.svg"
+  },
+  {
+    "unicode": "1f354",
+    "glyph": "🍔",
+    "name": "hamburger",
+    "group": "Food & Drink",
+    "file": "1f354.svg"
+  },
+  {
+    "unicode": "1f35f",
+    "glyph": "🍟",
+    "name": "french fries",
+    "group": "Food & Drink",
+    "file": "1f35f.svg"
+  },
+  {
+    "unicode": "1f32d",
+    "glyph": "🌭",
+    "name": "hot dog",
+    "group": "Food & Drink",
+    "file": "1f32d.svg"
+  },
+  {
+    "unicode": "1f37f",
+    "glyph": "🍿",
+    "name": "popcorn",
+    "group": "Food & Drink",
+    "file": "1f37f.svg"
+  },
+  {
+    "unicode": "1f382",
+    "glyph": "🎂",
+    "name": "birthday cake",
+    "group": "Food & Drink",
+    "file": "1f382.svg"
+  },
+  {
+    "unicode": "1f369",
+    "glyph": "🍩",
+    "name": "doughnut",
+    "group": "Food & Drink",
+    "file": "1f369.svg"
+  },
+  {
+    "unicode": "1f36a",
+    "glyph": "🍪",
+    "name": "cookie",
+    "group": "Food & Drink",
+    "file": "1f36a.svg"
+  },
+  {
+    "unicode": "1f349",
+    "glyph": "🍉",
+    "name": "watermelon",
+    "group": "Food & Drink",
+    "file": "1f349.svg"
+  },
+  {
+    "unicode": "1f347",
+    "glyph": "🍇",
+    "name": "grapes",
+    "group": "Food & Drink",
+    "file": "1f347.svg"
+  },
+  {
+    "unicode": "1f353",
+    "glyph": "🍓",
+    "name": "strawberry",
+    "group": "Food & Drink",
+    "file": "1f353.svg"
+  },
+  {
+    "unicode": "2615",
+    "glyph": "☕",
+    "name": "hot beverage",
+    "group": "Food & Drink",
+    "file": "2615.svg"
+  },
+  {
+    "unicode": "1f37a",
+    "glyph": "🍺",
+    "name": "beer mug",
+    "group": "Food & Drink",
+    "file": "1f37a.svg"
+  },
+  {
+    "unicode": "1f37b",
+    "glyph": "🍻",
+    "name": "clinking beer mugs",
+    "group": "Food & Drink",
+    "file": "1f37b.svg"
+  },
+  {
+    "unicode": "26bd",
+    "glyph": "⚽",
+    "name": "soccer ball",
+    "group": "Activities",
+    "file": "26bd.svg"
+  },
+  {
+    "unicode": "1f3c0",
+    "glyph": "🏀",
+    "name": "basketball",
+    "group": "Activities",
+    "file": "1f3c0.svg"
+  },
+  {
+    "unicode": "1f3c6",
+    "glyph": "🏆",
+    "name": "trophy",
+    "group": "Activities",
+    "file": "1f3c6.svg"
+  },
+  {
+    "unicode": "1f389",
+    "glyph": "🎉",
+    "name": "party popper",
+    "group": "Activities",
+    "file": "1f389.svg"
+  },
+  {
+    "unicode": "1f388",
+    "glyph": "🎈",
+    "name": "balloon",
+    "group": "Activities",
+    "file": "1f388.svg"
+  },
+  {
+    "unicode": "1f381",
+    "glyph": "🎁",
+    "name": "wrapped gift",
+    "group": "Activities",
+    "file": "1f381.svg"
+  },
+  {
+    "unicode": "1f4af",
+    "glyph": "💯",
+    "name": "hundred points",
+    "group": "Smileys & Emotion",
+    "file": "1f4af.svg"
+  },
+  {
+    "unicode": "2714 fe0f",
+    "glyph": "✔️",
+    "name": "check mark",
+    "group": "Symbols",
+    "file": "2714 fe0f.svg"
+  },
+  {
+    "unicode": "274c",
+    "glyph": "❌",
+    "name": "cross mark",
+    "group": "Symbols",
+    "file": "274c.svg"
+  },
+  {
+    "unicode": "2753",
+    "glyph": "❓",
+    "name": "red question mark",
+    "group": "Symbols",
+    "file": "2753.svg"
+  },
+  {
+    "unicode": "2757",
+    "glyph": "❗",
+    "name": "red exclamation mark",
+    "group": "Symbols",
+    "file": "2757.svg"
+  },
+  {
+    "unicode": "1f3b5",
+    "glyph": "🎵",
+    "name": "musical note",
+    "group": "Objects",
+    "file": "1f3b5.svg"
+  },
+  {
+    "unicode": "1f4f7",
+    "glyph": "📷",
+    "name": "camera",
+    "group": "Objects",
+    "file": "1f4f7.svg"
+  },
+  {
+    "unicode": "1f4a1",
+    "glyph": "💡",
+    "name": "light bulb",
+    "group": "Objects",
+    "file": "1f4a1.svg"
+  },
+  {
+    "unicode": "1f680",
+    "glyph": "🚀",
+    "name": "rocket",
+    "group": "Travel & Places",
+    "file": "1f680.svg"
+  },
+  {
+    "unicode": "2708 fe0f",
+    "glyph": "✈️",
+    "name": "airplane",
+    "group": "Travel & Places",
+    "file": "2708 fe0f.svg"
+  },
+  {
+    "unicode": "1f697",
+    "glyph": "🚗",
+    "name": "automobile",
+    "group": "Travel & Places",
+    "file": "1f697.svg"
+  },
+  {
+    "unicode": "1f3e0",
+    "glyph": "🏠",
+    "name": "house",
+    "group": "Travel & Places",
+    "file": "1f3e0.svg"
+  },
+  {
+    "unicode": "1f440",
+    "glyph": "👀",
+    "name": "eyes",
+    "group": "People & Body",
+    "file": "1f440.svg"
+  },
+  {
+    "unicode": "1f441 fe0f",
+    "glyph": "👁️",
+    "name": "eye",
+    "group": "People & Body",
+    "file": "1f441 fe0f.svg"
+  },
+  {
+    "unicode": "1f4ac",
+    "glyph": "💬",
+    "name": "speech balloon",
+    "group": "Smileys & Emotion",
+    "file": "1f4ac.svg"
+  },
+  {
+    "unicode": "1f4a5",
+    "glyph": "💥",
+    "name": "collision",
+    "group": "Smileys & Emotion",
+    "file": "1f4a5.svg"
+  },
+  {
+    "unicode": "1f4a6",
+    "glyph": "💦",
+    "name": "sweat droplets",
+    "group": "Smileys & Emotion",
+    "file": "1f4a6.svg"
+  },
+  {
+    "unicode": "1f4a4",
+    "glyph": "💤",
+    "name": "zzz",
+    "group": "Smileys & Emotion",
+    "file": "1f4a4.svg"
+  },
+  {
+    "unicode": "1f446",
+    "glyph": "👆",
+    "name": "backhand index pointing up",
+    "group": "People & Body",
+    "file": "1f446.svg"
+  },
+  {
+    "unicode": "1f447",
+    "glyph": "👇",
+    "name": "backhand index pointing down",
+    "group": "People & Body",
+    "file": "1f447.svg"
+  },
+  {
+    "unicode": "261d fe0f",
+    "glyph": "☝️",
+    "name": "index pointing up",
+    "group": "People & Body",
+    "file": "261d fe0f.svg"
+  }
+]

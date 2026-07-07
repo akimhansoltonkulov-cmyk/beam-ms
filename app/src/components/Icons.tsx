@@ -60,6 +60,13 @@ export const IconSend = (p: P) => (
     <path d="M4 12 20 4l-6 16-3-7-7-1Z" />
   </svg>
 )
+export const IconSmile = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M8.5 10.5h.01M15.5 10.5h.01" strokeWidth="2.4" />
+    <path d="M8 14.5c1 1.5 2.5 2.3 4 2.3s3-.8 4-2.3" />
+  </svg>
+)
 export const IconMic = (p: P) => (
   <svg {...base(p)}>
     <rect x="9" y="3" width="6" height="11" rx="3" />
