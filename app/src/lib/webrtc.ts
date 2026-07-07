@@ -16,6 +16,24 @@ import { supabase } from './supabase'
 const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
     { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+    // STUN alone only works when both peers have a NAT that allows direct
+    // hole-punching. Mobile/carrier-grade NAT and most corporate networks
+    // block that, so a TURN relay is required for calls to connect at all.
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
   ],
 }
 
@@ -38,6 +56,7 @@ type Signal =
   | { kind: 'answer'; from: string; sdp: RTCSessionDescriptionInit }
   | { kind: 'ice'; from: string; candidate: RTCIceCandidateInit }
   | { kind: 'hangup'; from: string }
+  | { kind: 'ready'; from: string }
 
 let meId: string | null = null
 let handlers: CallHandlers | null = null
@@ -91,6 +110,10 @@ function openRoom(dmId: string) {
         const queued = pendingSends
         pendingSends = []
         queued.forEach((p) => roomSend(p))
+        // Broadcasts aren't buffered for late subscribers — announce that
+        // we're listening so the other side knows it's safe to send the
+        // offer (and re-announce if they beat us here and already sent one).
+        roomSend({ kind: 'ready', from: meId! })
       }
     })
 }
@@ -181,7 +204,8 @@ async function beginCallerNegotiation() {
   if (!currentDmId) return
   openRoom(currentDmId)
   createPeer()
-  await makeOffer()
+  // Offer is sent once the callee's 'ready' signal confirms their room
+  // channel is actually subscribed — see the 'ready' case below.
 }
 
 async function handleRoomSignal(sig: Signal) {
@@ -210,6 +234,18 @@ async function handleRoomSignal(sig: Signal) {
       break
     case 'hangup':
       cleanup('remote-hangup')
+      break
+    case 'ready':
+      // Broadcasts only reach clients already joined at send time, so
+      // whoever subscribes to the room first can miss the other side's
+      // initial 'ready'. The callee is guaranteed to receive the caller's
+      // 'ready' (it always subscribes first) and echoes it back, which the
+      // caller — already subscribed by then — is guaranteed to receive.
+      if (isCaller) {
+        if (pc && !pc.localDescription) await makeOffer()
+      } else {
+        roomSend({ kind: 'ready', from: meId! })
+      }
       break
   }
 }
