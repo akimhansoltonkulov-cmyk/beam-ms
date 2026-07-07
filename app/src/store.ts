@@ -91,8 +91,7 @@ const profileToUser = (p: SupabaseProfile): User => ({
   phone: p.phone,
 })
 
-let idc = 1000
-const uid = (p: string) => `${p}-${idc++}`
+const uid = (p: string) => `${p}-${crypto.randomUUID()}`
 
 interface Prefs {
   darkComposer: boolean
